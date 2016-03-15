@@ -1,0 +1,32 @@
+{
+  "name": "xcraft-contrib-wpkg",
+  "version": "0.1.0",
+  "description": "Xcraft wpkg wrapper",
+  "main": "wpkg.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "xcraft",
+    "wpkg"
+  ],
+  "repository": {
+    "type": "file",
+    "url": "lib/xcraft-contrib-wpkg"
+  },
+  "dependencies": {
+    "async": "^1.4.0",
+    "xcraft-contrib-bootcmake": "0.1.0",
+    "xcraft-core-env": "0.1.0",
+    "xcraft-core-etc": "0.1.0",
+    "xcraft-core-fs": "0.1.0",
+    "xcraft-core-log": "0.1.0",
+    "xcraft-core-placeholder": "0.1.0",
+    "xcraft-core-process": "0.1.0",
+    "xcraft-core-subst": "0.1.0",
+    "xcraft-core-utils": "0.1.0"
+  },
+  "author": "Mathieu Schroeter",
+  "license": "MIT",
+  "devDependencies": {}
+}
