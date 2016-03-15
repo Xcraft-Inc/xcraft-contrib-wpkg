@@ -334,3 +334,25 @@ exports.update = function (arch, callback) {
   var wpkg = new WpkgBin (callback);
   wpkg.update (arch);
 };
+
+/**
+ * Publish a package in a specified repository.
+ *
+ * @param {string} packageName
+ * @param {string} arch - Architecture.
+ * @param {string} outputRepository
+ * @param {function(err, results)} callback
+ */
+exports.publish = function (packageName, arch, outputRepository, callback) {
+  // const wpkg = new WpkgBin (callback);
+
+  lookForPackage (packageName, arch, function (err, deb) {
+    if (err) {
+      callback (err);
+      return;
+    }
+
+    xLog.verb (deb);
+    callback ();
+  });
+};
