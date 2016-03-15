@@ -179,9 +179,21 @@ exports.buildFromSrc = function (packageName, arch, distribution, callback) {
   });
 };
 
-exports.listFiles = function (packageName, root, list, callback) {
-  const wpkg = new WpkgBin (callback);
-  wpkg.listFiles (packageName, root, list);
+/**
+ * List files of a package (data).
+ *
+ * @param {string} packageName
+ * @param {string} arch - Architecture.
+ * @param {function(err, results)} callback
+ */
+exports.listFiles = function (packageName, arch, callback) {
+  const list = [];
+
+  const wpkg = new WpkgBin ((err) => {
+    callback (err, list);
+  });
+
+  wpkg.listFiles (packageName, arch, list);
 };
 
 /**
