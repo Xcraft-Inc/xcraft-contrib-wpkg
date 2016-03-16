@@ -8,6 +8,7 @@ const fs   = require ('fs');
 const xLog         = require ('xcraft-core-log') (moduleName);
 const xCMake       = require ('xcraft-contrib-bootcmake');
 const xEnv         = require ('xcraft-core-env');
+const xFs          = require ('xcraft-core-fs');
 const xcraftConfig = require ('xcraft-core-etc').load ('xcraft');
 const pacmanConfig = require ('xcraft-core-etc').load ('xcraft-contrib-pacman');
 
@@ -341,18 +342,27 @@ exports.update = function (arch, callback) {
  * @param {string} packageName
  * @param {string} arch - Architecture.
  * @param {string} outputRepository
+ * @param {string} distribution
  * @param {function(err, results)} callback
  */
-exports.publish = function (packageName, arch, outputRepository, callback) {
-  // const wpkg = new WpkgBin (callback);
-
+exports.publish = function (packageName, arch, outputRepository, distribution, callback) {
   lookForPackage (packageName, arch, function (err, deb) {
     if (err) {
       callback (err);
       return;
     }
 
-    xLog.verb (deb);
-    callback ();
+    const dest = path.join (outputRepository, distribution);
+    try {
+      xFs.mkdir (dest);
+      xFs.cp (deb, path.join (dest, path.basename (deb)));
+    } catch (ex) {
+      callback (ex.stack);
+      return;
+    }
+
+    const wpkg = new WpkgBin (callback);
+    /* We create or update the index with our new package. */
+    wpkg.createIndex (outputRepository, pacmanConfig.pkgIndex);
   });
 };
