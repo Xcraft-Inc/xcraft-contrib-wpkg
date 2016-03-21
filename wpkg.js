@@ -39,8 +39,8 @@ exports.listIndexPackages = function (repositoryPath, arch, filters, callback) {
   wpkg.listIndexPackages (repositoryPath, arch, filters, list);
 };
 
-var lookForPackage = function (packageName, packageVersion, archRoot, callback) {
-  var repositoryPath = xcraftConfig.pkgDebRoot;
+var lookForPackage = function (packageName, packageVersion, archRoot, repositoryPath, callback) {
+  const repository = repositoryPath || xcraftConfig.pkgDebRoot;
 
   var filters = {
     name: packageName,
@@ -53,7 +53,7 @@ var lookForPackage = function (packageName, packageVersion, archRoot, callback) 
    * with the new way. Then we must look in the repository index file if
    * the package exists and in order to retrieve the full package name.
    */
-  exports.listIndexPackages (repositoryPath, archRoot, filters, function (err, list) {
+  exports.listIndexPackages (repository, archRoot, filters, function (err, list) {
    if (err) {
      callback (err);
      return;
@@ -69,7 +69,7 @@ var lookForPackage = function (packageName, packageVersion, archRoot, callback) 
    /* We have found the package, then we can build the full path and install
     * this one to the target root.
     */
-   debFile = path.join (repositoryPath, debFile);
+   debFile = path.join (repository, debFile);
    callback (null, debFile);
  });
 };
@@ -171,7 +171,7 @@ exports.buildFromSrc = function (packageName, arch, distribution, callback) {
     return;
   }
 
-  lookForPackage (packageName, null, arch, function (err, deb) {
+  lookForPackage (packageName, null, arch, null, function (err, deb) {
     if (err) {
       callback (err);
       return;
@@ -207,7 +207,7 @@ exports.listFiles = function (packageName, arch, callback) {
  * @param {function(err, results)} callback
  */
 exports.install = function (packageName, arch, reinstall, callback) {
-  lookForPackage (packageName, null, arch, function (err, deb) {
+  lookForPackage (packageName, null, arch, null, function (err, deb) {
     if (err) {
       callback (err);
       return;
@@ -347,7 +347,7 @@ exports.update = function (arch, callback) {
  * @param {function(err, results)} callback
  */
 exports.publish = function (packageName, arch, outputRepository, distribution, callback) {
-  lookForPackage (packageName, null, arch, function (err, deb) {
+  lookForPackage (packageName, null, arch, null, function (err, deb) {
     if (err) {
       callback (err);
       return;
