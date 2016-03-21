@@ -39,6 +39,15 @@ exports.listIndexPackages = function (repositoryPath, arch, filters, callback) {
   wpkg.listIndexPackages (repositoryPath, arch, filters, list);
 };
 
+/**
+ * Look in the repository if a specific package exists.
+ *
+ * @param {string} packageName
+ * @param {string} packageVersion
+ * @param {string} archRoot - Architecture for the admin dir.
+ * @param {string} repositoryPath - Path on the repository (null for default).
+ * @param {function(err, deb)} callback
+ */
 var lookForPackage = function (packageName, packageVersion, archRoot, repositoryPath, callback) {
   const repository = repositoryPath || xcraftConfig.pkgDebRoot;
 
