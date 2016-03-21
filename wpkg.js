@@ -376,3 +376,24 @@ exports.publish = function (packageName, arch, outputRepository, distribution, c
     wpkg.createIndex (outputRepository, pacmanConfig.pkgIndex);
   });
 };
+
+/**
+ * Check if a package is already published.
+ *
+ * @param {string} packageName
+ * @param {string} packageVersion
+ * @param {string} arch - Architecture.
+ * @param {string} repositoryPath - Path on the repository (or null).
+ * @param {function(err, results)} callback
+ */
+exports.isPublished = function (packageName, packageVersion, arch, repositoryPath, callback) {
+  lookForPackage (packageName, packageVersion, arch, repositoryPath, (err, deb) => {
+    if (err) {
+      xLog.warn (err);
+      callback (null, false);
+      return;
+    }
+
+    callback (null, deb);
+  });
+};
