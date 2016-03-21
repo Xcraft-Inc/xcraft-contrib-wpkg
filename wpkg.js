@@ -39,11 +39,12 @@ exports.listIndexPackages = function (repositoryPath, arch, filters, callback) {
   wpkg.listIndexPackages (repositoryPath, arch, filters, list);
 };
 
-var lookForPackage = function (packageName, archRoot, callback) {
+var lookForPackage = function (packageName, packageVersion, archRoot, callback) {
   var repositoryPath = xcraftConfig.pkgDebRoot;
 
   var filters = {
     name: packageName,
+    version: packageVersion,
     arch: new RegExp ('(' + archRoot + '|all)')
   };
 
@@ -170,7 +171,7 @@ exports.buildFromSrc = function (packageName, arch, distribution, callback) {
     return;
   }
 
-  lookForPackage (packageName, arch, function (err, deb) {
+  lookForPackage (packageName, null, arch, function (err, deb) {
     if (err) {
       callback (err);
       return;
@@ -206,7 +207,7 @@ exports.listFiles = function (packageName, arch, callback) {
  * @param {function(err, results)} callback
  */
 exports.install = function (packageName, arch, reinstall, callback) {
-  lookForPackage (packageName, arch, function (err, deb) {
+  lookForPackage (packageName, null, arch, function (err, deb) {
     if (err) {
       callback (err);
       return;
@@ -346,7 +347,7 @@ exports.update = function (arch, callback) {
  * @param {function(err, results)} callback
  */
 exports.publish = function (packageName, arch, outputRepository, distribution, callback) {
-  lookForPackage (packageName, arch, function (err, deb) {
+  lookForPackage (packageName, null, arch, function (err, deb) {
     if (err) {
       callback (err);
       return;
