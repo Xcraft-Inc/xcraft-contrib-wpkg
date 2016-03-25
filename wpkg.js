@@ -52,9 +52,9 @@ var lookForPackage = function (packageName, packageVersion, archRoot, repository
   const repository = repositoryPath || xcraftConfig.pkgDebRoot;
 
   var filters = {
-    name: packageName,
+    name:    packageName,
     version: packageVersion,
-    arch: new RegExp ('(' + archRoot + '|all)')
+    arch:    new RegExp ('(' + archRoot + '|all)')
   };
 
   /* wpkg is able to install a package just by its name. But it's not possible
