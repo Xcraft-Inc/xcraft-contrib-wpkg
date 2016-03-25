@@ -114,7 +114,7 @@ var build = function (packagePath, isSource, distribution, callback) {
     envPath = xCMake.stripShForMinGW ();
     wpkg.buildSrc ();
   } else {
-    wpkg.build (packagePath, arch);
+    wpkg.build (null, packagePath, arch);
   }
 };
 
@@ -178,7 +178,7 @@ exports.buildFromSrc = function (packageName, arch, outputRepository, callback) 
       return;
     }
 
-    wpkg.build (outputRepository, arch);
+    wpkg.build (null, outputRepository, arch);
     return;
   }
 
@@ -188,7 +188,7 @@ exports.buildFromSrc = function (packageName, arch, outputRepository, callback) 
       return;
     }
 
-    wpkg.build (deb, arch);
+    wpkg.build (null, deb, arch);
   });
 };
 
