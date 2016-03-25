@@ -147,14 +147,14 @@ exports.buildSrc = function (packagePath, distribution, outputRepository, callba
  *
  * @param {string} packageName
  * @param {string} arch - Architecture
- * @param {string} outputRepository
+ * @param {string} repository
  * @param {function(err, results)} callback
  */
-exports.buildFromSrc = function (packageName, arch, outputRepository, callback) {
+exports.buildFromSrc = function (packageName, arch, repository, callback) {
   const envPath = xCMake.stripShForMinGW ();
 
-  if (!outputRepository) {
-    outputRepository = xcraftConfig.pkgDebRoot;
+  if (!repository) {
+    repository = xcraftConfig.pkgDebRoot;
   }
 
   var wpkg = new WpkgBin (function (err) {
@@ -169,18 +169,18 @@ exports.buildFromSrc = function (packageName, arch, outputRepository, callback) 
 
     /* We create or update the index with our new package. */
     var wpkg = new WpkgBin (callback);
-    wpkg.createIndex (outputRepository, pacmanConfig.pkgIndex);
+    wpkg.createIndex (repository, pacmanConfig.pkgIndex);
   });
 
   /* Without packageName we consider the build of all source packages. */
   if (!packageName) {
-    if (!fs.existsSync (path.join (outputRepository, 'sources'))) {
+    if (!fs.existsSync (path.join (repository, 'sources'))) {
       xLog.info ('nothing to build');
       callback ();
       return;
     }
 
-    wpkg.build (null, outputRepository, arch);
+    wpkg.build (null, repository, arch);
     return;
   }
 
