@@ -175,8 +175,7 @@ exports.buildFromSrc = function (packageName, arch, repository, callback) {
   /* Without packageName we consider the build of all source packages. */
   if (!packageName) {
     if (!fs.existsSync (path.join (repository, 'sources'))) {
-      xLog.info ('nothing to build');
-      callback ();
+      callback ('nothing to build');
       return;
     }
 
