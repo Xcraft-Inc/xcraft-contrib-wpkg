@@ -83,7 +83,8 @@ var lookForPackage = function (packageName, packageVersion, archRoot, repository
  });
 };
 
-var build = function (packagePath, isSource, distribution, callback) {
+var build = function (packagePath, isSource, distribution, outputRepository, callback) {
+  const repositoryPath = outputRepository || xcraftConfig.pkgDebRoot;
   var pathObj = packagePath.split (path.sep);
 
   /* Retrieve the architecture which is in the packagePath. */
@@ -103,7 +104,6 @@ var build = function (packagePath, isSource, distribution, callback) {
     }
 
     var wpkg = new WpkgBin (callback);
-    var repositoryPath = xcraftConfig.pkgDebRoot;
 
     /* We create or update the index with our new package. */
     wpkg.createIndex (repositoryPath, pacmanConfig.pkgIndex);
@@ -112,9 +112,9 @@ var build = function (packagePath, isSource, distribution, callback) {
   if (isSource) {
     process.chdir (packagePath);
     envPath = xCMake.stripShForMinGW ();
-    wpkg.buildSrc ();
+    wpkg.buildSrc (repositoryPath);
   } else {
-    wpkg.build (null, packagePath, arch);
+    wpkg.build (repositoryPath, packagePath, arch);
   }
 };
 
@@ -123,10 +123,11 @@ var build = function (packagePath, isSource, distribution, callback) {
  *
  * @param {string} packagePath
  * @param {string} distribution
+ * @param {string} outputRepository - null for default.
  * @param {function(err, results)} callback
  */
-exports.build = function (packagePath, distribution, callback) {
-  build (packagePath, false, distribution, callback);
+exports.build = function (packagePath, distribution, outputRepository, callback) {
+  build (packagePath, false, distribution, outputRepository, callback);
 };
 
 /**
@@ -134,10 +135,11 @@ exports.build = function (packagePath, distribution, callback) {
  *
  * @param {string} packagePath
  * @param {string} distribution - Always replaced by 'sources'.
+ * @param {string} outputRepository - null for default.
  * @param {function(err, results)} callback
  */
-exports.buildSrc = function (packagePath, distribution, callback) {
-  build (packagePath, true, 'sources', callback);
+exports.buildSrc = function (packagePath, distribution, outputRepository, callback) {
+  build (packagePath, true, 'sources', outputRepository, callback);
 };
 
 /**
