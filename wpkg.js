@@ -354,12 +354,17 @@ exports.update = function (arch, callback) {
  *
  * @param {string} packageName
  * @param {string} arch - Architecture.
+ * @param {string} inputRepository
  * @param {string} outputRepository
  * @param {string} distribution
  * @param {function(err, results)} callback
  */
-exports.publish = function (packageName, arch, outputRepository, distribution, callback) {
-  lookForPackage (packageName, null, arch, null, function (err, deb) {
+exports.publish = function (packageName, arch, inputRepository, outputRepository, distribution, callback) {
+  if (!outputRepository) {
+    outputRepository = xcraftConfig.pkgDebRoot;
+  }
+
+  lookForPackage (packageName, null, arch, inputRepository, function (err, deb) {
     if (err) {
       callback (err);
       return;
