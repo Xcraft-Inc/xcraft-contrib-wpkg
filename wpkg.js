@@ -169,7 +169,7 @@ exports.buildFromSrc = function (packageName, arch, repository, callback) {
 
     /* We create or update the index with our new package. */
     var wpkg = new WpkgBin (callback);
-    wpkg.createIndex (repository, pacmanConfig.pkgIndex);
+    wpkg.createIndex (xcraftConfig.pkgDebRoot, pacmanConfig.pkgIndex);
   });
 
   /* Without packageName we consider the build of all source packages. */
