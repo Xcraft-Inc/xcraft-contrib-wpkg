@@ -386,6 +386,39 @@ exports.publish = function (packageName, arch, inputRepository, outputRepository
 };
 
 /**
+ * Unpublish a package from a specified repository.
+ *
+ * @param {string} packageName
+ * @param {string} arch - Architecture.
+ * @param {string} repository
+ * @param {string} distribution
+ * @param {function(err, results)} callback
+ */
+exports.unpublish = function (packageName, arch, repository, distribution, callback) {
+  if (!repository) {
+    repository = xcraftConfig.pkgDebRoot;
+  }
+
+  lookForPackage (packageName, null, arch, repository, function (err, deb) {
+    if (err) {
+      callback (err);
+      return;
+    }
+
+    try {
+      xFs.rm (deb);
+    } catch (ex) {
+      callback (ex.stack);
+      return;
+    }
+
+    const wpkg = new WpkgBin (callback);
+    /* We create or update the index with our new package. */
+    wpkg.createIndex (repository, pacmanConfig.pkgIndex);
+  });
+};
+
+/**
  * Check if a package is already published.
  *
  * @param {string} packageName
