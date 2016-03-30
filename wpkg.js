@@ -9,8 +9,8 @@ const xLog         = require ('xcraft-core-log') (moduleName);
 const xCMake       = require ('xcraft-contrib-bootcmake');
 const xEnv         = require ('xcraft-core-env');
 const xFs          = require ('xcraft-core-fs');
-const xcraftConfig = require ('xcraft-core-etc').load ('xcraft');
-const pacmanConfig = require ('xcraft-core-etc').load ('xcraft-contrib-pacman');
+const xcraftConfig = require ('xcraft-core-etc') ().load ('xcraft');
+const pacmanConfig = require ('xcraft-core-etc') ().load ('xcraft-contrib-pacman');
 
 const WpkgBin = require ('./lib/bin.js');
 
