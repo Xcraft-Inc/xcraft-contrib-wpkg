@@ -1,16 +1,11 @@
 'use strict';
 
-const moduleName = 'wpkg';
-
 const path = require ('path');
 const fs   = require ('fs');
 
-const xLog         = require ('xcraft-core-log') (moduleName);
 const xCMake       = require ('xcraft-contrib-bootcmake');
 const xEnv         = require ('xcraft-core-env');
 const xFs          = require ('xcraft-core-fs');
-const xcraftConfig = require ('xcraft-core-etc') ().load ('xcraft');
-const pacmanConfig = require ('xcraft-core-etc') ().load ('xcraft-contrib-pacman');
 
 const WpkgBin = require ('./lib/bin.js');
 
@@ -21,9 +16,10 @@ const WpkgBin = require ('./lib/bin.js');
  * @param {string} repositoryPath
  * @param {string} arch
  * @param {Object} filters
+ * @param {Object} response
  * @param {function(err, results)} callback
  */
-exports.listIndexPackages = function (repositoryPath, arch, filters, callback) {
+exports.listIndexPackages = function (repositoryPath, arch, filters, response, callback) {
   var list = [];
 
   if (!fs.existsSync (repositoryPath)) {
@@ -31,7 +27,7 @@ exports.listIndexPackages = function (repositoryPath, arch, filters, callback) {
     return;
   }
 
-  var wpkg = new WpkgBin (function (err) {
+  var wpkg = new WpkgBin (response, function (err) {
     /* The list array is populated by listIndexPackages. */
     callback (err, list);
   });
@@ -46,9 +42,12 @@ exports.listIndexPackages = function (repositoryPath, arch, filters, callback) {
  * @param {string} packageVersion
  * @param {string} archRoot - Architecture for the admin dir.
  * @param {string} repositoryPath - Path on the repository (null for default).
+ * @param {Object} response
  * @param {function(err, deb)} callback
  */
-var lookForPackage = function (packageName, packageVersion, archRoot, repositoryPath, callback) {
+var lookForPackage = function (packageName, packageVersion, archRoot, repositoryPath, response, callback) {
+  const xcraftConfig = require ('xcraft-core-etc') (null, response).load ('xcraft');
+
   const repository = repositoryPath || xcraftConfig.pkgDebRoot;
 
   var filters = {
@@ -62,7 +61,7 @@ var lookForPackage = function (packageName, packageVersion, archRoot, repository
    * with the new way. Then we must look in the repository index file if
    * the package exists and in order to retrieve the full package name.
    */
-  exports.listIndexPackages (repository, archRoot, filters, function (err, list) {
+  exports.listIndexPackages (repository, archRoot, filters, response, function (err, list) {
    if (err) {
      callback (err);
      return;
@@ -70,7 +69,7 @@ var lookForPackage = function (packageName, packageVersion, archRoot, repository
 
    var debFile = list[packageName];
    if (!debFile) {
-     xLog.warn ('the package %s is unavailable', packageName);
+     response.log.warn ('the package %s is unavailable', packageName);
      callback ('package not found');
      return;
    }
@@ -83,7 +82,10 @@ var lookForPackage = function (packageName, packageVersion, archRoot, repository
  });
 };
 
-var build = function (packagePath, isSource, distribution, outputRepository, callback) {
+var build = function (packagePath, isSource, distribution, outputRepository, response, callback) {
+  const xcraftConfig = require ('xcraft-core-etc') (null, response).load ('xcraft');
+  const pacmanConfig = require ('xcraft-core-etc') (null, response).load ('xcraft-contrib-pacman');
+
   const repositoryPath = outputRepository || xcraftConfig.pkgDebRoot;
   var pathObj = packagePath.split (path.sep);
 
@@ -92,7 +94,7 @@ var build = function (packagePath, isSource, distribution, outputRepository, cal
   var currentDir = process.cwd ();
   var envPath = null;
 
-  var wpkg = new WpkgBin (function (err) {
+  var wpkg = new WpkgBin (response, function (err) {
     if (envPath) {
       xEnv.var.path.insert (envPath.index, envPath.location);
     }
@@ -103,7 +105,7 @@ var build = function (packagePath, isSource, distribution, outputRepository, cal
       return;
     }
 
-    var wpkg = new WpkgBin (callback);
+    var wpkg = new WpkgBin (response, callback);
 
     /* We create or update the index with our new package. */
     wpkg.createIndex (repositoryPath, pacmanConfig.pkgIndex);
@@ -124,10 +126,11 @@ var build = function (packagePath, isSource, distribution, outputRepository, cal
  * @param {string} packagePath
  * @param {string} distribution
  * @param {string} outputRepository - null for default.
+ * @param {Object} response
  * @param {function(err, results)} callback
  */
-exports.build = function (packagePath, distribution, outputRepository, callback) {
-  build (packagePath, false, distribution, outputRepository, callback);
+exports.build = function (packagePath, distribution, outputRepository, response, callback) {
+  build (packagePath, false, distribution, outputRepository, response, callback);
 };
 
 /**
@@ -136,10 +139,11 @@ exports.build = function (packagePath, distribution, outputRepository, callback)
  * @param {string} packagePath
  * @param {string} distribution - Always replaced by 'sources'.
  * @param {string} outputRepository - null for default.
+ * @param {Object} response
  * @param {function(err, results)} callback
  */
-exports.buildSrc = function (packagePath, distribution, outputRepository, callback) {
-  build (packagePath, true, 'sources', outputRepository, callback);
+exports.buildSrc = function (packagePath, distribution, outputRepository, response, callback) {
+  build (packagePath, true, 'sources', outputRepository, response, callback);
 };
 
 /**
@@ -148,16 +152,20 @@ exports.buildSrc = function (packagePath, distribution, outputRepository, callba
  * @param {string} packageName
  * @param {string} arch - Architecture
  * @param {string} repository
+ * @param {Object} response
  * @param {function(err, results)} callback
  */
-exports.buildFromSrc = function (packageName, arch, repository, callback) {
+exports.buildFromSrc = function (packageName, arch, repository, response, callback) {
+  const xcraftConfig = require ('xcraft-core-etc') (null, response).load ('xcraft');
+  const pacmanConfig = require ('xcraft-core-etc') (null, response).load ('xcraft-contrib-pacman');
+
   const envPath = xCMake.stripShForMinGW ();
 
   if (!repository) {
     repository = xcraftConfig.pkgDebRoot;
   }
 
-  var wpkg = new WpkgBin (function (err) {
+  var wpkg = new WpkgBin (response, function (err) {
     if (envPath) {
       xEnv.var.path.insert (envPath.index, envPath.location);
     }
@@ -168,7 +176,7 @@ exports.buildFromSrc = function (packageName, arch, repository, callback) {
     }
 
     /* We create or update the index with our new package. */
-    var wpkg = new WpkgBin (callback);
+    var wpkg = new WpkgBin (response, callback);
     wpkg.createIndex (xcraftConfig.pkgDebRoot, pacmanConfig.pkgIndex);
   });
 
@@ -183,7 +191,7 @@ exports.buildFromSrc = function (packageName, arch, repository, callback) {
     return;
   }
 
-  lookForPackage (packageName, null, arch, null, function (err, deb) {
+  lookForPackage (packageName, null, arch, null, response, function (err, deb) {
     if (err) {
       callback (err);
       return;
@@ -198,12 +206,13 @@ exports.buildFromSrc = function (packageName, arch, repository, callback) {
  *
  * @param {string} packageName
  * @param {string} arch - Architecture.
+ * @param {Object} response
  * @param {function(err, results)} callback
  */
-exports.listFiles = function (packageName, arch, callback) {
+exports.listFiles = function (packageName, arch, response, callback) {
   const list = [];
 
-  const wpkg = new WpkgBin ((err) => {
+  const wpkg = new WpkgBin (response, (err) => {
     callback (err, list);
   });
 
@@ -216,16 +225,17 @@ exports.listFiles = function (packageName, arch, callback) {
  * @param {string} packageName
  * @param {string} arch - Architecture.
  * @param {boolean} reinstall
+ * @param {Object} response
  * @param {function(err, results)} callback
  */
-exports.install = function (packageName, arch, reinstall, callback) {
-  lookForPackage (packageName, null, arch, null, function (err, deb) {
+exports.install = function (packageName, arch, reinstall, response, callback) {
+  lookForPackage (packageName, null, arch, null, response, function (err, deb) {
     if (err) {
       callback (err);
       return;
     }
 
-    const wpkg = new WpkgBin (callback);
+    const wpkg = new WpkgBin (response, callback);
     wpkg.install (deb, arch, reinstall);
   });
 };
@@ -235,10 +245,11 @@ exports.install = function (packageName, arch, reinstall, callback) {
  *
  * @param {string} packageName
  * @param {string} arch - Architecture
+ * @param {Object} response
  * @param {function(err, results)} callback
  */
-exports.isInstalled = function (packageName, arch, callback) {
-  var wpkg = new WpkgBin (function (err, code) {
+exports.isInstalled = function (packageName, arch, response, callback) {
+  var wpkg = new WpkgBin (response, function (err, code) {
     if (err) {
       callback (err);
       return;
@@ -255,10 +266,11 @@ exports.isInstalled = function (packageName, arch, callback) {
  *
  * @param {string} packageName
  * @param {string} arch - Architecture.
+ * @param {Object} response
  * @param {function(err, results)} callback
  */
-exports.remove = function (packageName, arch, callback) {
-  var wpkg = new WpkgBin (callback);
+exports.remove = function (packageName, arch, response, callback) {
+  var wpkg = new WpkgBin (response, callback);
   wpkg.remove (packageName, arch);
 };
 
@@ -267,11 +279,15 @@ exports.remove = function (packageName, arch, callback) {
  * The target root is the destination where are installed the packages.
  *
  * @param {string} arch - Architecture.
+ * @param {Object} response
  * @param {function(err, results)} callback
  */
-exports.createAdmindir = function (arch, callback) {
+exports.createAdmindir = function (arch, response, callback) {
   var xFs = require ('xcraft-core-fs');
   var xPh = require ('xcraft-core-placeholder');
+
+  const xcraftConfig = require ('xcraft-core-etc') (null, response).load ('xcraft');
+  const pacmanConfig = require ('xcraft-core-etc') (null, response).load ('xcraft-contrib-pacman');
 
   /* This control file is used in order to create a new admin directory. */
   var fileIn  = path.join (__dirname, './templates/admindir.control');
@@ -287,7 +303,7 @@ exports.createAdmindir = function (arch, callback) {
   /* Create the target directory. */
   xFs.mkdir (path.join (xcraftConfig.pkgTargetRoot, arch));
 
-  var wpkg = new WpkgBin (callback);
+  var wpkg = new WpkgBin (response, callback);
   wpkg.createAdmindir (fileOut, arch);
 };
 
@@ -298,9 +314,11 @@ exports.createAdmindir = function (arch, callback) {
  *
  * @param {string} sourcePath
  * @param {string} arch - Architecture.
+ * @param {Object} response
  * @param {function(err, results)} callback
  */
-exports.addSources = function (sourcePath, arch, callback) {
+exports.addSources = function (sourcePath, arch, response, callback) {
+  const xcraftConfig = require ('xcraft-core-etc') (null, response).load ('xcraft');
   var async = require ('async');
 
   async.auto ({
@@ -319,7 +337,7 @@ exports.addSources = function (sourcePath, arch, callback) {
         return;
       }
 
-      var wpkg = new WpkgBin (function (err) {
+      var wpkg = new WpkgBin (response, function (err) {
         callback (err, list);
       });
       wpkg.listSources (arch, list);
@@ -332,7 +350,7 @@ exports.addSources = function (sourcePath, arch, callback) {
         return; /* already in the sources.list */
       }
 
-      var wpkg = new WpkgBin (callback);
+      var wpkg = new WpkgBin (response, callback);
       wpkg.addSources (sourcePath, arch);
     }]
   }, callback);
@@ -342,10 +360,11 @@ exports.addSources = function (sourcePath, arch, callback) {
  * Update the list of available packages from the repository.
  *
  * @param {string} arch - Architecture.
+ * @param {Object} response
  * @param {function(err, results)} callback
  */
-exports.update = function (arch, callback) {
-  var wpkg = new WpkgBin (callback);
+exports.update = function (arch, response, callback) {
+  var wpkg = new WpkgBin (response, callback);
   wpkg.update (arch);
 };
 
@@ -357,14 +376,18 @@ exports.update = function (arch, callback) {
  * @param {string} inputRepository
  * @param {string} outputRepository
  * @param {string} distribution
+ * @param {Object} response
  * @param {function(err, results)} callback
  */
-exports.publish = function (packageName, arch, inputRepository, outputRepository, distribution, callback) {
+exports.publish = function (packageName, arch, inputRepository, outputRepository, distribution, response, callback) {
+  const pacmanConfig = require ('xcraft-core-etc') (null, response).load ('xcraft-contrib-pacman');
+
   if (!outputRepository) {
+    const xcraftConfig = require ('xcraft-core-etc') (null, response).load ('xcraft');
     outputRepository = xcraftConfig.pkgDebRoot;
   }
 
-  lookForPackage (packageName, null, arch, inputRepository, function (err, deb) {
+  lookForPackage (packageName, null, arch, inputRepository, response, function (err, deb) {
     if (err) {
       callback (err);
       return;
@@ -379,7 +402,7 @@ exports.publish = function (packageName, arch, inputRepository, outputRepository
       return;
     }
 
-    const wpkg = new WpkgBin (callback);
+    const wpkg = new WpkgBin (response, callback);
     /* We create or update the index with our new package. */
     wpkg.createIndex (outputRepository, pacmanConfig.pkgIndex);
   });
@@ -392,14 +415,18 @@ exports.publish = function (packageName, arch, inputRepository, outputRepository
  * @param {string} arch - Architecture.
  * @param {string} repository
  * @param {string} distribution
+ * @param {Object} response
  * @param {function(err, results)} callback
  */
-exports.unpublish = function (packageName, arch, repository, distribution, callback) {
+exports.unpublish = function (packageName, arch, repository, distribution, response, callback) {
+  const pacmanConfig = require ('xcraft-core-etc') (null, response).load ('xcraft-contrib-pacman');
+
   if (!repository) {
+    const xcraftConfig = require ('xcraft-core-etc') (null, response).load ('xcraft');
     repository = xcraftConfig.pkgDebRoot;
   }
 
-  lookForPackage (packageName, null, arch, repository, function (err, deb) {
+  lookForPackage (packageName, null, arch, repository, response, function (err, deb) {
     if (err) {
       callback (err);
       return;
@@ -412,7 +439,7 @@ exports.unpublish = function (packageName, arch, repository, distribution, callb
       return;
     }
 
-    const wpkg = new WpkgBin (callback);
+    const wpkg = new WpkgBin (response, callback);
     /* We create or update the index with our new package. */
     wpkg.createIndex (repository, pacmanConfig.pkgIndex);
   });
@@ -425,12 +452,13 @@ exports.unpublish = function (packageName, arch, repository, distribution, callb
  * @param {string} packageVersion
  * @param {string} arch - Architecture.
  * @param {string} repositoryPath - Path on the repository (or null).
+ * @param {Object} response
  * @param {function(err, results)} callback
  */
-exports.isPublished = function (packageName, packageVersion, arch, repositoryPath, callback) {
-  lookForPackage (packageName, packageVersion, arch, repositoryPath, (err, deb) => {
+exports.isPublished = function (packageName, packageVersion, arch, repositoryPath, response, callback) {
+  lookForPackage (packageName, packageVersion, arch, repositoryPath, response, (err, deb) => {
     if (err) {
-      xLog.warn (err);
+      response.log.warn (err);
       callback (null, false);
       return;
     }
