@@ -298,7 +298,9 @@ class Wpkg {
   /**
    * Add one or more global hooks in the admindir.
    *
-   * @param {string[]} hooks - List of scripts.
+   * An hook must be a shell or batch script.
+   *
+   * @param {string[]} hooks - List of scripts paths.
    * @param {string} arch - Architecture.
    * @param {function(err, results)} callback
    */
