@@ -13,6 +13,10 @@ const WpkgBin = require ('./lib/bin.js');
 class Wpkg {
   constructor (resp) {
     this._resp = resp;
+
+    const xEtc = require ('xcraft-core-etc') (null, this._resp);
+    this._xcraftConfig = xEtc.load ('xcraft');
+    this._pacmanConfig = xEtc.load ('xcraft-contrib-pacman');
   }
   /**
    * Retrieve a list of packages available in a repository accordingly to filters.
@@ -48,9 +52,7 @@ class Wpkg {
    * @param {function(err, deb)} callback
    */
   _lookForPackage (packageName, packageVersion, archRoot, repositoryPath, callback) {
-    const xcraftConfig = require ('xcraft-core-etc') (null, this._resp).load ('xcraft');
-
-    const repository = repositoryPath || xcraftConfig.pkgDebRoot;
+    const repository = repositoryPath || this._xcraftConfig.pkgDebRoot;
 
     var filters = {
       name:    packageName,
@@ -85,10 +87,7 @@ class Wpkg {
   }
 
   _build (packagePath, isSource, distribution, outputRepository, callback) {
-    const xcraftConfig = require ('xcraft-core-etc') (null, this._resp).load ('xcraft');
-    const pacmanConfig = require ('xcraft-core-etc') (null, this._resp).load ('xcraft-contrib-pacman');
-
-    const repositoryPath = outputRepository || xcraftConfig.pkgDebRoot;
+    const repositoryPath = outputRepository || this._xcraftConfig.pkgDebRoot;
     var pathObj = packagePath.split (path.sep);
 
     /* Retrieve the architecture which is in the packagePath. */
@@ -110,7 +109,7 @@ class Wpkg {
       var wpkg = new WpkgBin (this._resp, callback);
 
       /* We create or update the index with our new package. */
-      wpkg.createIndex (repositoryPath, pacmanConfig.pkgIndex);
+      wpkg.createIndex (repositoryPath, this._pacmanConfig.pkgIndex);
     });
 
     if (isSource) {
@@ -155,13 +154,10 @@ class Wpkg {
    * @param {function(err, results)} callback
    */
   buildFromSrc (packageName, arch, repository, callback) {
-    const xcraftConfig = require ('xcraft-core-etc') (null, this._resp).load ('xcraft');
-    const pacmanConfig = require ('xcraft-core-etc') (null, this._resp).load ('xcraft-contrib-pacman');
-
     const envPath = xCMake.stripShForMinGW ();
 
     if (!repository) {
-      repository = xcraftConfig.pkgDebRoot;
+      repository = this._xcraftConfig.pkgDebRoot;
     }
 
     var wpkg = new WpkgBin (this._resp, (err) => {
@@ -176,7 +172,7 @@ class Wpkg {
 
       /* We create or update the index with our new package. */
       var wpkg = new WpkgBin (this._resp, callback);
-      wpkg.createIndex (xcraftConfig.pkgDebRoot, pacmanConfig.pkgIndex);
+      wpkg.createIndex (this._xcraftConfig.pkgDebRoot, this._pacmanConfig.pkgIndex);
     });
 
     /* Without packageName we consider the build of all source packages. */
@@ -280,22 +276,19 @@ class Wpkg {
     var xFs = require ('xcraft-core-fs');
     var xPh = require ('xcraft-core-placeholder');
 
-    const xcraftConfig = require ('xcraft-core-etc') (null, this._resp).load ('xcraft');
-    const pacmanConfig = require ('xcraft-core-etc') (null, this._resp).load ('xcraft-contrib-pacman');
-
     /* This control file is used in order to create a new admin directory. */
     var fileIn  = path.join (__dirname, './templates/admindir.control');
-    var fileOut = path.join (xcraftConfig.tempRoot, 'control');
+    var fileOut = path.join (this._xcraftConfig.tempRoot, 'control');
 
     var ph = new xPh.Placeholder ();
     ph.set ('ARCHITECTURE',     arch)
       .set ('MAINTAINER.NAME',  'Xcraft Toolchain')
       .set ('MAINTAINER.EMAIL', 'xcraft@xcraft.ch')
-      .set ('DISTRIBUTION',     pacmanConfig.pkgToolchainRepository)
+      .set ('DISTRIBUTION',     this._pacmanConfig.pkgToolchainRepository)
       .injectFile ('ADMINDIR', fileIn, fileOut);
 
     /* Create the target directory. */
-    xFs.mkdir (path.join (xcraftConfig.pkgTargetRoot, arch));
+    xFs.mkdir (path.join (this._xcraftConfig.pkgTargetRoot, arch));
 
     var wpkg = new WpkgBin (this._resp, callback);
     wpkg.createAdmindir (fileOut, arch);
@@ -323,12 +316,11 @@ class Wpkg {
    * @param {function(err, results)} callback
    */
   addSources (sourcePath, arch, callback) {
-    const xcraftConfig = require ('xcraft-core-etc') (null, this._resp).load ('xcraft');
     var async = require ('async');
 
     async.auto ({
       checkSources: (callback) => {
-        var sourcesList = path.join (xcraftConfig.pkgTargetRoot,
+        var sourcesList = path.join (this._xcraftConfig.pkgTargetRoot,
                                      arch, 'var/lib/wpkg/core/sources.list');
         var exists = fs.existsSync (sourcesList);
         callback (null, exists);
@@ -383,11 +375,8 @@ class Wpkg {
    * @param {function(err, results)} callback
    */
   publish (packageName, arch, inputRepository, outputRepository, distribution, callback) {
-    const pacmanConfig = require ('xcraft-core-etc') (null, this._resp).load ('xcraft-contrib-pacman');
-
     if (!outputRepository) {
-      const xcraftConfig = require ('xcraft-core-etc') (null, this._resp).load ('xcraft');
-      outputRepository = xcraftConfig.pkgDebRoot;
+      outputRepository = this._xcraftConfig.pkgDebRoot;
     }
 
     this._lookForPackage (packageName, null, arch, inputRepository, (err, deb) => {
@@ -407,7 +396,7 @@ class Wpkg {
 
       const wpkg = new WpkgBin (this._resp, callback);
       /* We create or update the index with our new package. */
-      wpkg.createIndex (outputRepository, pacmanConfig.pkgIndex);
+      wpkg.createIndex (outputRepository, this._pacmanConfig.pkgIndex);
     });
   }
 
@@ -421,11 +410,8 @@ class Wpkg {
    * @param {function(err, results)} callback
    */
   unpublish (packageName, arch, repository, distribution, callback) {
-    const pacmanConfig = require ('xcraft-core-etc') (null, this._resp).load ('xcraft-contrib-pacman');
-
     if (!repository) {
-      const xcraftConfig = require ('xcraft-core-etc') (null, this._resp).load ('xcraft');
-      repository = xcraftConfig.pkgDebRoot;
+      repository = this._xcraftConfig.pkgDebRoot;
     }
 
     this._lookForPackage (packageName, null, arch, repository, (err, deb) => {
@@ -443,7 +429,7 @@ class Wpkg {
 
       const wpkg = new WpkgBin (this._resp, callback);
       /* We create or update the index with our new package. */
-      wpkg.createIndex (repository, pacmanConfig.pkgIndex);
+      wpkg.createIndex (repository, this._pacmanConfig.pkgIndex);
     });
   }
 
