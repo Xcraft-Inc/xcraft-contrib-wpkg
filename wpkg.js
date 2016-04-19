@@ -3,9 +3,9 @@
 const path = require ('path');
 const fs   = require ('fs');
 
-const xCMake       = require ('xcraft-contrib-bootcmake');
-const xEnv         = require ('xcraft-core-env');
-const xFs          = require ('xcraft-core-fs');
+const xCMake = require ('xcraft-contrib-bootcmake');
+const xEnv   = require ('xcraft-core-env');
+const xFs    = require ('xcraft-core-fs');
 
 const WpkgBin = require ('./lib/bin.js');
 
@@ -18,6 +18,7 @@ class Wpkg {
     this._xcraftConfig = xEtc.load ('xcraft');
     this._pacmanConfig = xEtc.load ('xcraft-contrib-pacman');
   }
+
   /**
    * Retrieve a list of packages available in a repository accordingly to filters.
    *
