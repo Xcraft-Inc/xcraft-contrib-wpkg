@@ -302,6 +302,18 @@ class Wpkg {
   }
 
   /**
+   * Add one or more global hooks in the admindir.
+   *
+   * @param {string[]} hooks - List of scripts.
+   * @param {string} arch - Architecture.
+   * @param {function(err, results)} callback
+   */
+  addHooks (hooks, arch, callback) {
+    const wpkg = new WpkgBin (this._resp, callback);
+    wpkg.addHooks (hooks, arch);
+  }
+
+  /**
    * Add a new source in the target installation.
    * A source is needed in order to upgrade the packages in the target root
    * accordingly to the versions in the repository referenced in the source.
