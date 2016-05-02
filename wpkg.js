@@ -94,12 +94,13 @@ class Wpkg {
     /* Retrieve the architecture which is in the packagePath. */
     var arch = pathObj[pathObj.length - 2];
     var currentDir = process.cwd ();
-    var envPath = null;
+    const envPath = [];
 
     var wpkg = new WpkgBin (this._resp, (err) => {
-      if (envPath) {
-        xEnv.var.path.insert (envPath.index, envPath.location);
+      for (const p of envPath) {
+        xEnv.var.path.insert (p.index, p.location);
       }
+
       process.chdir (currentDir);
 
       if (err) {
@@ -162,8 +163,8 @@ class Wpkg {
     }
 
     var wpkg = new WpkgBin (this._resp, (err) => {
-      if (envPath) {
-        xEnv.var.path.insert (envPath.index, envPath.location);
+      for (const p of envPath) {
+        xEnv.var.path.insert (p.index, p.location);
       }
 
       if (err) {
