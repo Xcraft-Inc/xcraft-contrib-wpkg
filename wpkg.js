@@ -94,7 +94,7 @@ class Wpkg {
     /* Retrieve the architecture which is in the packagePath. */
     var arch = pathObj[pathObj.length - 2];
     var currentDir = process.cwd ();
-    const envPath = [];
+    let envPath = [];
 
     var wpkg = new WpkgBin (this._resp, (err) => {
       for (const p of envPath) {
