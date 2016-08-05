@@ -17,14 +17,14 @@
   "dependencies": {
     "async": "^1.4.0",
     "xcraft-contrib-bootcmake": "0.1.0",
-    "xcraft-core-env": "0.1.0",
-    "xcraft-core-etc": "0.1.0",
-    "xcraft-core-fs": "0.1.0",
-    "xcraft-core-log": "0.1.0",
-    "xcraft-core-placeholder": "0.1.0",
-    "xcraft-core-process": "0.1.0",
-    "xcraft-core-subst": "0.1.0",
-    "xcraft-core-utils": "0.1.0"
+    "xcraft-core-env": "^1.0.0",
+    "xcraft-core-etc": "^1.0.0",
+    "xcraft-core-fs": "^1.0.0",
+    "xcraft-core-log": "^1.0.0",
+    "xcraft-core-placeholder": "^1.0.0",
+    "xcraft-core-process": "^1.0.0",
+    "xcraft-core-subst": "^1.0.0",
+    "xcraft-core-utils": "^1.0.0"
   },
   "author": "Mathieu Schroeter",
   "license": "MIT",
