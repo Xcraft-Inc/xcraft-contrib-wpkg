@@ -35,12 +35,12 @@ class Wpkg {
       return;
     }
 
-    var wpkg = new WpkgBin (this._resp, (err) => {
+    var wpkg = new WpkgBin (this._resp);
+
+    wpkg.listIndexPackages (repositoryPath, arch, filters, list, (err) => {
       /* The list array is populated by listIndexPackages. */
       callback (err, list);
     });
-
-    wpkg.listIndexPackages (repositoryPath, arch, filters, list);
   }
 
   /**
@@ -96,7 +96,9 @@ class Wpkg {
     var currentDir = process.cwd ();
     let envPath = [];
 
-    var wpkg = new WpkgBin (this._resp, (err) => {
+    var wpkg = new WpkgBin (this._resp);
+
+    const wpkgCallback = (err) => {
       for (const p of envPath) {
         xEnv.var.path.insert (p.index, p.location);
       }
@@ -108,18 +110,18 @@ class Wpkg {
         return;
       }
 
-      var wpkg = new WpkgBin (this._resp, callback);
+      var wpkg = new WpkgBin (this._resp);
 
       /* We create or update the index with our new package. */
-      wpkg.createIndex (repositoryPath, this._pacmanConfig.pkgIndex);
-    });
+      wpkg.createIndex (repositoryPath, this._pacmanConfig.pkgIndex, callback);
+    };
 
     if (isSource) {
       process.chdir (packagePath);
       envPath = xCMake.stripShForMinGW ();
-      wpkg.buildSrc (repositoryPath);
+      wpkg.buildSrc (repositoryPath, wpkgCallback);
     } else {
-      wpkg.build (repositoryPath, packagePath, arch);
+      wpkg.build (repositoryPath, packagePath, arch, wpkgCallback);
     }
   }
 
@@ -162,7 +164,9 @@ class Wpkg {
       repository = this._xcraftConfig.pkgDebRoot;
     }
 
-    var wpkg = new WpkgBin (this._resp, (err) => {
+    var wpkg = new WpkgBin (this._resp);
+
+    const wpkgCallback = (err) => {
       for (const p of envPath) {
         xEnv.var.path.insert (p.index, p.location);
       }
@@ -173,9 +177,10 @@ class Wpkg {
       }
 
       /* We create or update the index with our new package. */
-      var wpkg = new WpkgBin (this._resp, callback);
-      wpkg.createIndex (this._xcraftConfig.pkgDebRoot, this._pacmanConfig.pkgIndex);
-    });
+      var wpkg = new WpkgBin (this._resp);
+      wpkg.createIndex (this._xcraftConfig.pkgDebRoot,
+                        this._pacmanConfig.pkgIndex, callback);
+    };
 
     /* Without packageName we consider the build of all source packages. */
     if (!packageName) {
@@ -184,7 +189,7 @@ class Wpkg {
         return;
       }
 
-      wpkg.build (null, repository, arch);
+      wpkg.build (null, repository, arch, wpkgCallback);
       return;
     }
 
@@ -194,7 +199,7 @@ class Wpkg {
         return;
       }
 
-      wpkg.build (null, deb, arch);
+      wpkg.build (null, deb, arch, wpkgCallback);
     });
   }
 
@@ -208,11 +213,11 @@ class Wpkg {
   listFiles (packageName, arch, callback) {
     const list = [];
 
-    const wpkg = new WpkgBin (this._resp, (err) => {
+    const wpkg = new WpkgBin (this._resp);
+
+    wpkg.listFiles (packageName, arch, list, (err) => {
       callback (err, list);
     });
-
-    wpkg.listFiles (packageName, arch, list);
   }
 
   /**
@@ -230,8 +235,8 @@ class Wpkg {
         return;
       }
 
-      const wpkg = new WpkgBin (this._resp, callback);
-      wpkg.install (deb, arch, reinstall);
+      const wpkg = new WpkgBin (this._resp);
+      wpkg.install (deb, arch, reinstall, callback);
     });
   }
 
@@ -243,7 +248,9 @@ class Wpkg {
    * @param {function(err, results)} callback
    */
   isInstalled (packageName, arch, callback) {
-    var wpkg = new WpkgBin (this._resp, (err, code) => {
+    var wpkg = new WpkgBin (this._resp);
+
+    wpkg.isInstalled (packageName, arch, (err, code) => {
       if (err) {
         callback (err);
         return;
@@ -251,8 +258,6 @@ class Wpkg {
 
       callback (null, !code);
     });
-
-    wpkg.isInstalled (packageName, arch);
   }
 
   /**
@@ -263,8 +268,8 @@ class Wpkg {
    * @param {function(err, results)} callback
    */
   remove (packageName, arch, callback) {
-    var wpkg = new WpkgBin (this._resp, callback);
-    wpkg.remove (packageName, arch);
+    var wpkg = new WpkgBin (this._resp);
+    wpkg.remove (packageName, arch, callback);
   }
 
   /**
@@ -292,8 +297,8 @@ class Wpkg {
     /* Create the target directory. */
     xFs.mkdir (path.join (this._xcraftConfig.pkgTargetRoot, arch));
 
-    var wpkg = new WpkgBin (this._resp, callback);
-    wpkg.createAdmindir (fileOut, arch);
+    var wpkg = new WpkgBin (this._resp);
+    wpkg.createAdmindir (fileOut, arch, callback);
   }
 
   /**
@@ -306,8 +311,8 @@ class Wpkg {
    * @param {function(err, results)} callback
    */
   addHooks (hooks, arch, callback) {
-    const wpkg = new WpkgBin (this._resp, callback);
-    wpkg.addHooks (hooks, arch);
+    const wpkg = new WpkgBin (this._resp);
+    wpkg.addHooks (hooks, arch, callback);
   }
 
   /**
@@ -338,10 +343,10 @@ class Wpkg {
           return;
         }
 
-        var wpkg = new WpkgBin (this._resp, (err) => {
+        var wpkg = new WpkgBin (this._resp);
+        wpkg.listSources (arch, list, (err) => {
           callback (err, list);
         });
-        wpkg.listSources (arch, list);
       }],
 
       addSources: ['listSources', (callback, results) => {
@@ -351,8 +356,8 @@ class Wpkg {
           return; /* already in the sources.list */
         }
 
-        var wpkg = new WpkgBin (this._resp, callback);
-        wpkg.addSources (sourcePath, arch);
+        var wpkg = new WpkgBin (this._resp);
+        wpkg.addSources (sourcePath, arch, callback);
       }]
     }, callback);
   }
@@ -364,8 +369,8 @@ class Wpkg {
    * @param {function(err, results)} callback
    */
   update (arch, callback) {
-    var wpkg = new WpkgBin (this._resp, callback);
-    wpkg.update (arch);
+    var wpkg = new WpkgBin (this._resp);
+    wpkg.update (arch, callback);
   }
 
   /**
@@ -398,9 +403,9 @@ class Wpkg {
         return;
       }
 
-      const wpkg = new WpkgBin (this._resp, callback);
+      const wpkg = new WpkgBin (this._resp);
       /* We create or update the index with our new package. */
-      wpkg.createIndex (outputRepository, this._pacmanConfig.pkgIndex);
+      wpkg.createIndex (outputRepository, this._pacmanConfig.pkgIndex, callback);
     });
   }
 
@@ -431,9 +436,9 @@ class Wpkg {
         return;
       }
 
-      const wpkg = new WpkgBin (this._resp, callback);
+      const wpkg = new WpkgBin (this._resp);
       /* We create or update the index with our new package. */
-      wpkg.createIndex (repository, this._pacmanConfig.pkgIndex);
+      wpkg.createIndex (repository, this._pacmanConfig.pkgIndex, callback);
     });
   }
 
