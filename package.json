@@ -18,7 +18,7 @@
     "async": "^1.4.0",
     "watt": "^3.3.0",
     "xcraft-contrib-bootcmake": "0.1.0",
-    "xcraft-core-env": "^1.0.0",
+    "xcraft-core-env": "^2.0.0",
     "xcraft-core-etc": "^1.0.0",
     "xcraft-core-fs": "^1.0.0",
     "xcraft-core-log": "^1.0.0",
