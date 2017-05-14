@@ -29,5 +29,7 @@
   },
   "author": "Mathieu Schroeter",
   "license": "MIT",
-  "devDependencies": {}
+  "devDependencies": {
+    "xcraft-dev-rules": "^0.1.15"
+  }
 }
