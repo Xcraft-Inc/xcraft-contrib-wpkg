@@ -6,10 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [
-    "xcraft",
-    "wpkg"
-  ],
+  "keywords": ["xcraft", "wpkg"],
   "repository": {
     "type": "file",
     "url": "lib/xcraft-contrib-wpkg"
@@ -30,6 +27,6 @@
   "author": "Mathieu Schroeter",
   "license": "MIT",
   "devDependencies": {
-    "xcraft-dev-rules": "^0.1.15"
+    "xcraft-dev-rules": "^0.2.0"
   }
 }

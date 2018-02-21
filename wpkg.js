@@ -1,21 +1,21 @@
 'use strict';
 
-const path = require ('path');
-const fs = require ('fs');
+const path = require('path');
+const fs = require('fs');
 
-const xCMake = require ('xcraft-contrib-bootcmake');
-const xEnv = require ('xcraft-core-env');
-const xFs = require ('xcraft-core-fs');
+const xCMake = require('xcraft-contrib-bootcmake');
+const xEnv = require('xcraft-core-env');
+const xFs = require('xcraft-core-fs');
 
-const WpkgBin = require ('./lib/bin.js');
+const WpkgBin = require('./lib/bin.js');
 
 class Wpkg {
-  constructor (resp) {
+  constructor(resp) {
     this._resp = resp;
 
-    const xEtc = require ('xcraft-core-etc') (null, this._resp);
-    this._xcraftConfig = xEtc.load ('xcraft');
-    this._pacmanConfig = xEtc.load ('xcraft-contrib-pacman');
+    const xEtc = require('xcraft-core-etc')(null, this._resp);
+    this._xcraftConfig = xEtc.load('xcraft');
+    this._pacmanConfig = xEtc.load('xcraft-contrib-pacman');
   }
 
   /**
@@ -26,19 +26,19 @@ class Wpkg {
    * @param {Object} filters
    * @param {function(err, results)} callback
    */
-  listIndexPackages (repositoryPath, arch, filters, callback) {
+  listIndexPackages(repositoryPath, arch, filters, callback) {
     const list = [];
 
-    if (!fs.existsSync (repositoryPath)) {
-      callback ('repository not found');
+    if (!fs.existsSync(repositoryPath)) {
+      callback('repository not found');
       return;
     }
 
-    const wpkg = new WpkgBin (this._resp);
+    const wpkg = new WpkgBin(this._resp);
 
-    wpkg.listIndexPackages (repositoryPath, arch, filters, list, err => {
+    wpkg.listIndexPackages(repositoryPath, arch, filters, list, err => {
       /* The list array is populated by listIndexPackages. */
-      callback (err, list);
+      callback(err, list);
     });
   }
 
@@ -51,7 +51,7 @@ class Wpkg {
    * @param {string} repositoryPath - Path on the repository (null for default).
    * @param {function(err, deb)} callback
    */
-  _lookForPackage (
+  _lookForPackage(
     packageName,
     packageVersion,
     archRoot,
@@ -63,7 +63,7 @@ class Wpkg {
     const filters = {
       name: packageName,
       version: packageVersion,
-      arch: new RegExp ('(' + archRoot + '|all)'),
+      arch: new RegExp('(' + archRoot + '|all)'),
     };
 
     /* wpkg is able to install a package just by its name. But it's not possible
@@ -71,62 +71,62 @@ class Wpkg {
      * with the new way. Then we must look in the repository index file if
      * the package exists and in order to retrieve the full package name.
      */
-    this.listIndexPackages (repository, archRoot, filters, (err, list) => {
+    this.listIndexPackages(repository, archRoot, filters, (err, list) => {
       if (err) {
-        callback (err);
+        callback(err);
         return;
       }
 
       let debFile = list[packageName];
       if (!debFile) {
-        this._resp.log.warn ('the package %s is unavailable', packageName);
-        callback ('package not found');
+        this._resp.log.warn('the package %s is unavailable', packageName);
+        callback('package not found');
         return;
       }
 
       /* We have found the package, then we can build the full path and install
       * this one to the target root.
       */
-      debFile = path.join (repository, debFile);
-      callback (null, debFile);
+      debFile = path.join(repository, debFile);
+      callback(null, debFile);
     });
   }
 
-  _build (packagePath, isSource, distribution, outputRepository, callback) {
+  _build(packagePath, isSource, distribution, outputRepository, callback) {
     const repositoryPath = outputRepository || this._xcraftConfig.pkgDebRoot;
-    const pathObj = packagePath.split (path.sep);
+    const pathObj = packagePath.split(path.sep);
 
     /* Retrieve the architecture which is in the packagePath. */
     const arch = pathObj[pathObj.length - 2];
-    const currentDir = process.cwd ();
+    const currentDir = process.cwd();
     let envPath = [];
 
-    const wpkg = new WpkgBin (this._resp);
+    const wpkg = new WpkgBin(this._resp);
 
     const wpkgCallback = err => {
       for (const p of envPath) {
-        xEnv.var.path.insert (p.index, p.location);
+        xEnv.var.path.insert(p.index, p.location);
       }
 
-      process.chdir (currentDir);
+      process.chdir(currentDir);
 
       if (err) {
-        callback (err);
+        callback(err);
         return;
       }
 
-      const wpkg = new WpkgBin (this._resp);
+      const wpkg = new WpkgBin(this._resp);
 
       /* We create or update the index with our new package. */
-      wpkg.createIndex (repositoryPath, this._pacmanConfig.pkgIndex, callback);
+      wpkg.createIndex(repositoryPath, this._pacmanConfig.pkgIndex, callback);
     };
 
     if (isSource) {
-      process.chdir (packagePath);
-      envPath = xCMake.stripShForMinGW ();
-      wpkg.buildSrc (repositoryPath, wpkgCallback);
+      process.chdir(packagePath);
+      envPath = xCMake.stripShForMinGW();
+      wpkg.buildSrc(repositoryPath, wpkgCallback);
     } else {
-      wpkg.build (repositoryPath, packagePath, arch, wpkgCallback);
+      wpkg.build(repositoryPath, packagePath, arch, wpkgCallback);
     }
   }
 
@@ -138,8 +138,8 @@ class Wpkg {
    * @param {string} outputRepository - null for default.
    * @param {function(err, results)} callback
    */
-  build (packagePath, distribution, outputRepository, callback) {
-    this._build (packagePath, false, distribution, outputRepository, callback);
+  build(packagePath, distribution, outputRepository, callback) {
+    this._build(packagePath, false, distribution, outputRepository, callback);
   }
 
   /**
@@ -150,8 +150,8 @@ class Wpkg {
    * @param {string} outputRepository - null for default.
    * @param {function(err, results)} callback
    */
-  buildSrc (packagePath, distribution, outputRepository, callback) {
-    this._build (packagePath, true, 'sources', outputRepository, callback);
+  buildSrc(packagePath, distribution, outputRepository, callback) {
+    this._build(packagePath, true, 'sources', outputRepository, callback);
   }
 
   /**
@@ -162,28 +162,28 @@ class Wpkg {
    * @param {string} repository
    * @param {function(err, results)} callback
    */
-  buildFromSrc (packageName, arch, repository, callback) {
-    const envPath = xCMake.stripShForMinGW ();
+  buildFromSrc(packageName, arch, repository, callback) {
+    const envPath = xCMake.stripShForMinGW();
 
     if (!repository) {
       repository = this._xcraftConfig.pkgDebRoot;
     }
 
-    const wpkg = new WpkgBin (this._resp);
+    const wpkg = new WpkgBin(this._resp);
 
     const wpkgCallback = err => {
       for (const p of envPath) {
-        xEnv.var.path.insert (p.index, p.location);
+        xEnv.var.path.insert(p.index, p.location);
       }
 
       if (err) {
-        callback (err);
+        callback(err);
         return;
       }
 
       /* We create or update the index with our new package. */
-      const wpkg = new WpkgBin (this._resp);
-      wpkg.createIndex (
+      const wpkg = new WpkgBin(this._resp);
+      wpkg.createIndex(
         this._xcraftConfig.pkgDebRoot,
         this._pacmanConfig.pkgIndex,
         callback
@@ -192,22 +192,22 @@ class Wpkg {
 
     /* Without packageName we consider the build of all source packages. */
     if (!packageName) {
-      if (!fs.existsSync (path.join (repository, 'sources'))) {
-        callback ('nothing to build');
+      if (!fs.existsSync(path.join(repository, 'sources'))) {
+        callback('nothing to build');
         return;
       }
 
-      wpkg.build (null, repository, arch, wpkgCallback);
+      wpkg.build(null, repository, arch, wpkgCallback);
       return;
     }
 
-    this._lookForPackage (packageName, null, arch, null, (err, deb) => {
+    this._lookForPackage(packageName, null, arch, null, (err, deb) => {
       if (err) {
-        callback (err);
+        callback(err);
         return;
       }
 
-      wpkg.build (null, deb, arch, wpkgCallback);
+      wpkg.build(null, deb, arch, wpkgCallback);
     });
   }
 
@@ -218,13 +218,13 @@ class Wpkg {
    * @param {string} arch - Architecture.
    * @param {function(err, results)} callback
    */
-  listFiles (packageName, arch, callback) {
+  listFiles(packageName, arch, callback) {
     const list = [];
 
-    const wpkg = new WpkgBin (this._resp);
+    const wpkg = new WpkgBin(this._resp);
 
-    wpkg.listFiles (packageName, arch, list, err => {
-      callback (err, list);
+    wpkg.listFiles(packageName, arch, list, err => {
+      callback(err, list);
     });
   }
 
@@ -236,15 +236,15 @@ class Wpkg {
    * @param {boolean} reinstall
    * @param {function(err, results)} callback
    */
-  install (packageName, arch, reinstall, callback) {
-    this._lookForPackage (packageName, null, arch, null, (err, deb) => {
+  install(packageName, arch, reinstall, callback) {
+    this._lookForPackage(packageName, null, arch, null, (err, deb) => {
       if (err) {
-        callback (err);
+        callback(err);
         return;
       }
 
-      const wpkg = new WpkgBin (this._resp);
-      wpkg.install (deb, arch, reinstall, callback);
+      const wpkg = new WpkgBin(this._resp);
+      wpkg.install(deb, arch, reinstall, callback);
     });
   }
 
@@ -255,16 +255,16 @@ class Wpkg {
    * @param {string} arch - Architecture
    * @param {function(err, results)} callback
    */
-  isInstalled (packageName, arch, callback) {
-    const wpkg = new WpkgBin (this._resp);
+  isInstalled(packageName, arch, callback) {
+    const wpkg = new WpkgBin(this._resp);
 
-    wpkg.isInstalled (packageName, arch, (err, code) => {
+    wpkg.isInstalled(packageName, arch, (err, code) => {
       if (err) {
-        callback (err);
+        callback(err);
         return;
       }
 
-      callback (null, !code);
+      callback(null, !code);
     });
   }
 
@@ -275,9 +275,9 @@ class Wpkg {
    * @param {string} arch - Architecture.
    * @param {function(err, results)} callback
    */
-  remove (packageName, arch, callback) {
-    const wpkg = new WpkgBin (this._resp);
-    wpkg.remove (packageName, arch, callback);
+  remove(packageName, arch, callback) {
+    const wpkg = new WpkgBin(this._resp);
+    wpkg.remove(packageName, arch, callback);
   }
 
   /**
@@ -287,27 +287,27 @@ class Wpkg {
    * @param {string} arch - Architecture.
    * @param {function(err, results)} callback
    */
-  createAdmindir (arch, callback) {
-    const xFs = require ('xcraft-core-fs');
-    const xPh = require ('xcraft-core-placeholder');
+  createAdmindir(arch, callback) {
+    const xFs = require('xcraft-core-fs');
+    const xPh = require('xcraft-core-placeholder');
 
     /* This control file is used in order to create a new admin directory. */
-    const fileIn = path.join (__dirname, './templates/admindir.control');
-    const fileOut = path.join (this._xcraftConfig.tempRoot, 'control');
+    const fileIn = path.join(__dirname, './templates/admindir.control');
+    const fileOut = path.join(this._xcraftConfig.tempRoot, 'control');
 
-    const ph = new xPh.Placeholder ();
+    const ph = new xPh.Placeholder();
     ph
-      .set ('ARCHITECTURE', arch)
-      .set ('MAINTAINER.NAME', 'Xcraft Toolchain')
-      .set ('MAINTAINER.EMAIL', 'xcraft@xcraft.ch')
-      .set ('DISTRIBUTION', this._pacmanConfig.pkgToolchainRepository)
-      .injectFile ('ADMINDIR', fileIn, fileOut);
+      .set('ARCHITECTURE', arch)
+      .set('MAINTAINER.NAME', 'Xcraft Toolchain')
+      .set('MAINTAINER.EMAIL', 'xcraft@xcraft.ch')
+      .set('DISTRIBUTION', this._pacmanConfig.pkgToolchainRepository)
+      .injectFile('ADMINDIR', fileIn, fileOut);
 
     /* Create the target directory. */
-    xFs.mkdir (path.join (this._xcraftConfig.pkgTargetRoot, arch));
+    xFs.mkdir(path.join(this._xcraftConfig.pkgTargetRoot, arch));
 
-    const wpkg = new WpkgBin (this._resp);
-    wpkg.createAdmindir (fileOut, arch, callback);
+    const wpkg = new WpkgBin(this._resp);
+    wpkg.createAdmindir(fileOut, arch, callback);
   }
 
   /**
@@ -319,9 +319,9 @@ class Wpkg {
    * @param {string} arch - Architecture.
    * @param {function(err, results)} callback
    */
-  addHooks (hooks, arch, callback) {
-    const wpkg = new WpkgBin (this._resp);
-    wpkg.addHooks (hooks, arch, callback);
+  addHooks(hooks, arch, callback) {
+    const wpkg = new WpkgBin(this._resp);
+    wpkg.addHooks(hooks, arch, callback);
   }
 
   /**
@@ -333,19 +333,19 @@ class Wpkg {
    * @param {string} arch - Architecture.
    * @param {function(err, results)} callback
    */
-  addSources (sourcePath, arch, callback) {
-    const async = require ('async');
+  addSources(sourcePath, arch, callback) {
+    const async = require('async');
 
-    async.auto (
+    async.auto(
       {
         checkSources: callback => {
-          const sourcesList = path.join (
+          const sourcesList = path.join(
             this._xcraftConfig.pkgTargetRoot,
             arch,
             'var/lib/wpkg/core/sources.list'
           );
-          const exists = fs.existsSync (sourcesList);
-          callback (null, exists);
+          const exists = fs.existsSync(sourcesList);
+          callback(null, exists);
         },
 
         listSources: [
@@ -354,13 +354,13 @@ class Wpkg {
             const list = [];
 
             if (!results.checkSources) {
-              callback (null, list);
+              callback(null, list);
               return;
             }
 
-            const wpkg = new WpkgBin (this._resp);
-            wpkg.listSources (arch, list, err => {
-              callback (err, list);
+            const wpkg = new WpkgBin(this._resp);
+            wpkg.listSources(arch, list, err => {
+              callback(err, list);
             });
           },
         ],
@@ -369,13 +369,13 @@ class Wpkg {
           'listSources',
           (callback, results) => {
             /* The list array is populated by listSources. */
-            if (results.listSources.indexOf (sourcePath) >= 0) {
-              callback ();
+            if (results.listSources.indexOf(sourcePath) >= 0) {
+              callback();
               return; /* already in the sources.list */
             }
 
-            const wpkg = new WpkgBin (this._resp);
-            wpkg.addSources (sourcePath, arch, callback);
+            const wpkg = new WpkgBin(this._resp);
+            wpkg.addSources(sourcePath, arch, callback);
           },
         ],
       },
@@ -389,9 +389,9 @@ class Wpkg {
    * @param {string} arch - Architecture.
    * @param {function(err, results)} callback
    */
-  update (arch, callback) {
-    const wpkg = new WpkgBin (this._resp);
-    wpkg.update (arch, callback);
+  update(arch, callback) {
+    const wpkg = new WpkgBin(this._resp);
+    wpkg.update(arch, callback);
   }
 
   /**
@@ -404,7 +404,7 @@ class Wpkg {
    * @param {string} distribution
    * @param {function(err, results)} callback
    */
-  publish (
+  publish(
     packageName,
     arch,
     inputRepository,
@@ -416,29 +416,29 @@ class Wpkg {
       outputRepository = this._xcraftConfig.pkgDebRoot;
     }
 
-    this._lookForPackage (
+    this._lookForPackage(
       packageName,
       null,
       arch,
       inputRepository,
       (err, deb) => {
         if (err) {
-          callback (err);
+          callback(err);
           return;
         }
 
-        const dest = path.join (outputRepository, distribution);
+        const dest = path.join(outputRepository, distribution);
         try {
-          xFs.mkdir (dest);
-          xFs.cp (deb, path.join (dest, path.basename (deb)));
+          xFs.mkdir(dest);
+          xFs.cp(deb, path.join(dest, path.basename(deb)));
         } catch (ex) {
-          callback (ex.stack);
+          callback(ex.stack);
           return;
         }
 
-        const wpkg = new WpkgBin (this._resp);
+        const wpkg = new WpkgBin(this._resp);
         /* We create or update the index with our new package. */
-        wpkg.createIndex (
+        wpkg.createIndex(
           outputRepository,
           this._pacmanConfig.pkgIndex,
           callback
@@ -456,27 +456,27 @@ class Wpkg {
    * @param {string} distribution
    * @param {function(err, results)} callback
    */
-  unpublish (packageName, arch, repository, distribution, callback) {
+  unpublish(packageName, arch, repository, distribution, callback) {
     if (!repository) {
       repository = this._xcraftConfig.pkgDebRoot;
     }
 
-    this._lookForPackage (packageName, null, arch, repository, (err, deb) => {
+    this._lookForPackage(packageName, null, arch, repository, (err, deb) => {
       if (err) {
-        callback (err);
+        callback(err);
         return;
       }
 
       try {
-        xFs.rm (deb);
+        xFs.rm(deb);
       } catch (ex) {
-        callback (ex.stack);
+        callback(ex.stack);
         return;
       }
 
-      const wpkg = new WpkgBin (this._resp);
+      const wpkg = new WpkgBin(this._resp);
       /* We create or update the index with our new package. */
-      wpkg.createIndex (repository, this._pacmanConfig.pkgIndex, callback);
+      wpkg.createIndex(repository, this._pacmanConfig.pkgIndex, callback);
     });
   }
 
@@ -489,23 +489,23 @@ class Wpkg {
    * @param {string} repositoryPath - Path on the repository (or null).
    * @param {function(err, results)} callback
    */
-  isPublished (packageName, packageVersion, arch, repositoryPath, callback) {
-    this._lookForPackage (
+  isPublished(packageName, packageVersion, arch, repositoryPath, callback) {
+    this._lookForPackage(
       packageName,
       packageVersion,
       arch,
       repositoryPath,
       (err, deb) => {
         if (err) {
-          this._resp.log.warn (err);
-          callback (null, false);
+          this._resp.log.warn(err);
+          callback(null, false);
           return;
         }
 
-        callback (null, deb);
+        callback(null, deb);
       }
     );
   }
 }
 
-module.exports = resp => new Wpkg (resp);
+module.exports = resp => new Wpkg(resp);
