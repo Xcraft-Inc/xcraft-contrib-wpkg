@@ -296,8 +296,7 @@ class Wpkg {
     const fileOut = path.join(this._xcraftConfig.tempRoot, 'control');
 
     const ph = new xPh.Placeholder();
-    ph
-      .set('ARCHITECTURE', arch)
+    ph.set('ARCHITECTURE', arch)
       .set('MAINTAINER.NAME', 'Xcraft Toolchain')
       .set('MAINTAINER.EMAIL', 'xcraft@xcraft.ch')
       .set('DISTRIBUTION', this._pacmanConfig.pkgToolchainRepository)
