@@ -485,6 +485,8 @@ class Wpkg {
         const wpkg = new WpkgBin(this._resp);
         /* We create or update the index with our new package(s). */
         wpkg.createIndex(repository, this._pacmanConfig.pkgIndex, callback);
+      } else {
+        callback();
       }
     });
   }
