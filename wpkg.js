@@ -85,8 +85,8 @@ class Wpkg {
       }
 
       /* We have found the package, then we can build the full path and install
-      * this one to the target root.
-      */
+       * this one to the target root.
+       */
       debFile = path.join(repository, debFile);
       callback(null, debFile);
     });
