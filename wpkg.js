@@ -453,9 +453,17 @@ class Wpkg {
    * @param {string} arch - Architecture.
    * @param {string} repository
    * @param {string} distribution
+   * @param {boolean} updateIndex - True to call createIndex (slow).
    * @param {function(err, results)} callback
    */
-  unpublish(packageName, arch, repository, distribution, callback) {
+  unpublish(
+    packageName,
+    arch,
+    repository,
+    distribution,
+    updateIndex,
+    callback
+  ) {
     if (!repository) {
       repository = this._xcraftConfig.pkgDebRoot;
     }
@@ -473,9 +481,11 @@ class Wpkg {
         return;
       }
 
-      const wpkg = new WpkgBin(this._resp);
-      /* We create or update the index with our new package. */
-      wpkg.createIndex(repository, this._pacmanConfig.pkgIndex, callback);
+      if (updateIndex) {
+        const wpkg = new WpkgBin(this._resp);
+        /* We create or update the index with our new package(s). */
+        wpkg.createIndex(repository, this._pacmanConfig.pkgIndex, callback);
+      }
     });
   }
 
