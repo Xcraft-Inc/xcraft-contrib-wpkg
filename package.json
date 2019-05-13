@@ -16,7 +16,7 @@
     "gigawatts": "^4.0.5",
     "xcraft-contrib-bootcmake": "0.1.0",
     "xcraft-core-env": "^2.0.0",
-    "xcraft-core-etc": "^1.0.0",
+    "xcraft-core-etc": "^2.0.0",
     "xcraft-core-fs": "^1.0.0",
     "xcraft-core-log": "^1.0.0",
     "xcraft-core-placeholder": "^1.0.0",
