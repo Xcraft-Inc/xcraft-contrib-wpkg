@@ -236,14 +236,14 @@ class Wpkg {
    * @param {boolean} reinstall
    * @param {function(err, results)} callback
    */
-  install(packageName, arch, reinstall, callback) {
+  install(packageName, arch, targetRoot, reinstall, callback) {
     this._lookForPackage(packageName, null, arch, null, (err, deb) => {
       if (err) {
         callback(err);
         return;
       }
 
-      const wpkg = new WpkgBin(this._resp);
+      const wpkg = new WpkgBin(this._resp, targetRoot);
       wpkg.install(deb, arch, reinstall, callback);
     });
   }
@@ -287,7 +287,7 @@ class Wpkg {
    * @param {string} arch - Architecture.
    * @param {function(err, results)} callback
    */
-  createAdmindir(arch, callback) {
+  createAdmindir(arch, distribution, targetRoot, callback) {
     const xFs = require('xcraft-core-fs');
     const xPh = require('xcraft-core-placeholder');
 
@@ -295,17 +295,21 @@ class Wpkg {
     const fileIn = path.join(__dirname, './templates/admindir.control');
     const fileOut = path.join(this._xcraftConfig.tempRoot, 'control');
 
+    if (!distribution) {
+      distribution = this._pacmanConfig.pkgToolchainRepository;
+    }
+
     const ph = new xPh.Placeholder();
     ph.set('ARCHITECTURE', arch)
       .set('MAINTAINER.NAME', 'Xcraft Toolchain')
       .set('MAINTAINER.EMAIL', 'xcraft@xcraft.ch')
-      .set('DISTRIBUTION', this._pacmanConfig.pkgToolchainRepository)
+      .set('DISTRIBUTION', distribution)
       .injectFile('ADMINDIR', fileIn, fileOut);
 
     /* Create the target directory. */
-    xFs.mkdir(path.join(this._xcraftConfig.pkgTargetRoot, arch));
+    xFs.mkdir(path.join(targetRoot || this._xcraftConfig.pkgTargetRoot, arch));
 
-    const wpkg = new WpkgBin(this._resp);
+    const wpkg = new WpkgBin(this._resp, targetRoot);
     wpkg.createAdmindir(fileOut, arch, callback);
   }
 
@@ -332,14 +336,18 @@ class Wpkg {
    * @param {string} arch - Architecture.
    * @param {function(err, results)} callback
    */
-  addSources(sourcePath, arch, callback) {
+  addSources(sourcePath, arch, targetRoot, callback) {
     const async = require('async');
+
+    if (!targetRoot) {
+      targetRoot = this._xcraftConfig.pkgTargetRoot;
+    }
 
     async.auto(
       {
         checkSources: callback => {
           const sourcesList = path.join(
-            this._xcraftConfig.pkgTargetRoot,
+            targetRoot,
             arch,
             'var/lib/wpkg/core/sources.list'
           );
@@ -357,7 +365,7 @@ class Wpkg {
               return;
             }
 
-            const wpkg = new WpkgBin(this._resp);
+            const wpkg = new WpkgBin(this._resp, targetRoot);
             wpkg.listSources(arch, list, err => {
               callback(err, list);
             });
@@ -373,7 +381,7 @@ class Wpkg {
               return; /* already in the sources.list */
             }
 
-            const wpkg = new WpkgBin(this._resp);
+            const wpkg = new WpkgBin(this._resp, targetRoot);
             wpkg.addSources(sourcePath, arch, callback);
           },
         ],
@@ -388,8 +396,8 @@ class Wpkg {
    * @param {string} arch - Architecture.
    * @param {function(err, results)} callback
    */
-  update(arch, callback) {
-    const wpkg = new WpkgBin(this._resp);
+  update(arch, targetRoot, callback) {
+    const wpkg = new WpkgBin(this._resp, targetRoot);
     wpkg.update(arch, callback);
   }
 
