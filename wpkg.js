@@ -21,10 +21,10 @@ class Wpkg {
   /**
    * Retrieve a list of packages available in a repository accordingly to filters.
    *
-   * @param {string} repositoryPath
-   * @param {string} arch
-   * @param {Object} filters
-   * @param {function(err, results)} callback
+   * @param {string} repositoryPath - Source repository.
+   * @param {string} arch - Architecture.
+   * @param {Object} filters - Strings or regexps (in an object).
+   * @param {function(err, results)} callback - Async callback.
    */
   listIndexPackages(repositoryPath, arch, filters, callback) {
     const list = [];
@@ -45,11 +45,11 @@ class Wpkg {
   /**
    * Look in the repository if a specific package exists.
    *
-   * @param {string} packageName
-   * @param {string} packageVersion
+   * @param {string} packageName - Package name.
+   * @param {string} packageVersion - Package version.
    * @param {string} archRoot - Architecture for the admin dir.
-   * @param {string} repositoryPath - Path on the repository (null for default).
-   * @param {function(err, deb)} callback
+   * @param {string} [repositoryPath] - Path on the repository (null for default).
+   * @param {function(err, deb)} callback - Async callback.
    */
   _lookForPackage(
     packageName,
@@ -133,10 +133,10 @@ class Wpkg {
   /**
    * Build a new standard package.
    *
-   * @param {string} packagePath
-   * @param {string} distribution
-   * @param {string} outputRepository - null for default.
-   * @param {function(err, results)} callback
+   * @param {string} packagePath - Source package location.
+   * @param {string} distribution - Distribution name.
+   * @param {string} [outputRepository] - null for default.
+   * @param {function(err, results)} callback - Async callback.
    */
   build(packagePath, distribution, outputRepository, callback) {
     this._build(packagePath, false, distribution, outputRepository, callback);
@@ -145,10 +145,10 @@ class Wpkg {
   /**
    * Build a new source package.
    *
-   * @param {string} packagePath
+   * @param {string} packagePath - Source package location.
    * @param {string} distribution - Always replaced by 'sources'.
-   * @param {string} outputRepository - null for default.
-   * @param {function(err, results)} callback
+   * @param {string} [outputRepository] - null for default.
+   * @param {function(err, results)} callback - Async callback.
    */
   buildSrc(packagePath, distribution, outputRepository, callback) {
     this._build(packagePath, true, 'sources', outputRepository, callback);
@@ -157,10 +157,10 @@ class Wpkg {
   /**
    * Build a new binary package from a source package.
    *
-   * @param {string} packageName
+   * @param {string} packageName - Package name.
    * @param {string} arch - Architecture
-   * @param {string} repository
-   * @param {function(err, results)} callback
+   * @param {string} [repository] - Source repository (null for default).
+   * @param {function(err, results)} callback - Async callback.
    */
   buildFromSrc(packageName, arch, repository, callback) {
     const envPath = xCMake.stripShForMinGW();
@@ -214,9 +214,9 @@ class Wpkg {
   /**
    * List files of a package (data).
    *
-   * @param {string} packageName
+   * @param {string} packageName - Package name.
    * @param {string} arch - Architecture.
-   * @param {function(err, results)} callback
+   * @param {function(err, results)} callback - Async callback.
    */
   listFiles(packageName, arch, callback) {
     const list = [];
@@ -231,10 +231,11 @@ class Wpkg {
   /**
    * Install a package with its dependencies.
    *
-   * @param {string} packageName
+   * @param {string} packageName - Package name.
    * @param {string} arch - Architecture.
-   * @param {boolean} reinstall
-   * @param {function(err, results)} callback
+   * @param {string} [targetRoot] - For production root (null for devroot).
+   * @param {boolean} [reinstall] - Reinstall if already installed.
+   * @param {function(err, results)} callback - Async callback.
    */
   install(packageName, arch, targetRoot, reinstall, callback) {
     this._lookForPackage(packageName, null, arch, null, (err, deb) => {
@@ -251,9 +252,9 @@ class Wpkg {
   /**
    * Test if a package is already installed.
    *
-   * @param {string} packageName
+   * @param {string} packageName - Package name.
    * @param {string} arch - Architecture
-   * @param {function(err, results)} callback
+   * @param {function(err, results)} callback - Async callback.
    */
   isInstalled(packageName, arch, callback) {
     const wpkg = new WpkgBin(this._resp);
@@ -271,9 +272,9 @@ class Wpkg {
   /**
    * Remove a package.
    *
-   * @param {string} packageName
+   * @param {string} packageName - Package name.
    * @param {string} arch - Architecture.
-   * @param {function(err, results)} callback
+   * @param {function(err, results)} callback - Async callback.
    */
   remove(packageName, arch, callback) {
     const wpkg = new WpkgBin(this._resp);
@@ -285,7 +286,9 @@ class Wpkg {
    * The target root is the destination where are installed the packages.
    *
    * @param {string} arch - Architecture.
-   * @param {function(err, results)} callback
+   * @param {string} [distribution] - A specific distribution or null for default.
+   * @param {string} [targetRoot] -  For production root (null for devroot).
+   * @param {function(err, results)} callback - Async callback.
    */
   createAdmindir(arch, distribution, targetRoot, callback) {
     const xFs = require('xcraft-core-fs');
@@ -320,7 +323,7 @@ class Wpkg {
    *
    * @param {string[]} hooks - List of scripts paths.
    * @param {string} arch - Architecture.
-   * @param {function(err, results)} callback
+   * @param {function(err, results)} callback - Async callback.
    */
   addHooks(hooks, arch, callback) {
     const wpkg = new WpkgBin(this._resp);
@@ -332,9 +335,10 @@ class Wpkg {
    * A source is needed in order to upgrade the packages in the target root
    * accordingly to the versions in the repository referenced in the source.
    *
-   * @param {string} sourcePath
+   * @param {string} sourcePath - The new APT source entry to add.
    * @param {string} arch - Architecture.
-   * @param {function(err, results)} callback
+   * @param {string} [targetRoot] -  For production root (null for devroot).
+   * @param {function(err, results)} callback - Async callback.
    */
   addSources(sourcePath, arch, targetRoot, callback) {
     const async = require('async');
@@ -394,7 +398,8 @@ class Wpkg {
    * Update the list of available packages from the repository.
    *
    * @param {string} arch - Architecture.
-   * @param {function(err, results)} callback
+   * @param {string} [targetRoot] -  For production root (null for devroot).
+   * @param {function(err, results)} callback - Async callback.
    */
   update(arch, targetRoot, callback) {
     const wpkg = new WpkgBin(this._resp, targetRoot);
@@ -404,12 +409,12 @@ class Wpkg {
   /**
    * Publish a package in a specified repository.
    *
-   * @param {string} packageName
+   * @param {string} packageName - Package name.
    * @param {string} arch - Architecture.
-   * @param {string} inputRepository
-   * @param {string} outputRepository
-   * @param {string} distribution
-   * @param {function(err, results)} callback
+   * @param {string} inputRepository - Source repository.
+   * @param {string} outputRepository - Destination repository.
+   * @param {string} distribution - Distribution name.
+   * @param {function(err, results)} callback - Async callback.
    */
   publish(
     packageName,
@@ -457,12 +462,12 @@ class Wpkg {
   /**
    * Unpublish a package from a specified repository.
    *
-   * @param {string} packageName
+   * @param {string} packageName - Package name.
    * @param {string} arch - Architecture.
-   * @param {string} repository
-   * @param {string} distribution
+   * @param {string} repository - Source repository.
+   * @param {string} distribution - Distribution name.
    * @param {boolean} updateIndex - True to call createIndex (slow).
-   * @param {function(err, results)} callback
+   * @param {function(err, results)} callback - Async callback.
    */
   unpublish(
     packageName,
@@ -502,11 +507,11 @@ class Wpkg {
   /**
    * Check if a package is already published.
    *
-   * @param {string} packageName
-   * @param {string} packageVersion
+   * @param {string} packageName - Package name.
+   * @param {string} packageVersion - Package version.
    * @param {string} arch - Architecture.
    * @param {string} repositoryPath - Path on the repository (or null).
-   * @param {function(err, results)} callback
+   * @param {function(err, results)} callback - Async callback.
    */
   isPublished(packageName, packageVersion, arch, repositoryPath, callback) {
     this._lookForPackage(
