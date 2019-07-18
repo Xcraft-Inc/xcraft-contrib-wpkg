@@ -304,7 +304,7 @@ class Wpkg {
 
     const ph = new xPh.Placeholder();
     ph.set('ARCHITECTURE', arch)
-      .set('MAINTAINER.NAME', 'Xcraft Toolchain')
+      .set('MAINTAINER.NAME', 'Xcraft')
       .set('MAINTAINER.EMAIL', 'xcraft@xcraft.ch')
       .set('DISTRIBUTION', distribution)
       .injectFile('ADMINDIR', fileIn, fileOut);
