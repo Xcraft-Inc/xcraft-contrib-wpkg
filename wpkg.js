@@ -274,11 +274,12 @@ class Wpkg {
    *
    * @param {string} packageName - Package name.
    * @param {string} arch - Architecture.
+   * @param {boolean} [recursive] - Remove deps recursively.
    * @param {function(err, results)} callback - Async callback.
    */
-  remove(packageName, arch, callback) {
+  remove(packageName, arch, recursive, callback) {
     const wpkg = new WpkgBin(this._resp);
-    wpkg.remove(packageName, arch, callback);
+    wpkg.remove(packageName, arch, recursive, callback);
   }
 
   /**
