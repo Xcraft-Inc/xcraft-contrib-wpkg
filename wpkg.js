@@ -175,19 +175,7 @@ class Wpkg {
       for (const p of envPath) {
         xEnv.var.path.insert(p.index, p.location);
       }
-
-      if (err) {
-        callback(err);
-        return;
-      }
-
-      /* We create or update the index with our new package. */
-      const wpkg = new WpkgBin(this._resp);
-      wpkg.createIndex(
-        this._xcraftConfig.pkgDebRoot,
-        this._pacmanConfig.pkgIndex,
-        callback
-      );
+      callback(err);
     };
 
     /* Without packageName we consider the build of all source packages. */
