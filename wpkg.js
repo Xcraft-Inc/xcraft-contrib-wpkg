@@ -160,16 +160,19 @@ class Wpkg {
    * @param {string} packageName - Package name.
    * @param {string} arch - Architecture
    * @param {string} [repository] - Source repository (null for default).
+   * @param {string} [distribution] - A specific distribution or null for default.
    * @param {function(err, results)} callback - Async callback.
    */
-  buildFromSrc(packageName, arch, repository, callback) {
+  buildFromSrc(packageName, arch, repository, distribution, callback) {
     const envPath = xCMake.stripShForMinGW();
 
     if (!repository) {
       repository = this._xcraftConfig.pkgDebRoot;
     }
 
-    const wpkg = new WpkgBin(this._resp);
+    const wpkg = new WpkgBin(this._resp, null, {
+      PEON_DISTRIBUTION: distribution,
+    });
 
     const wpkgCallback = err => {
       for (const p of envPath) {
