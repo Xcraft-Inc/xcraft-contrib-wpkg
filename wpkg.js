@@ -2,10 +2,12 @@
 
 const path = require('path');
 const fs = require('fs');
+const watt = require('gigawatts');
 
 const xCMake = require('xcraft-contrib-bootcmake');
 const xEnv = require('xcraft-core-env');
 const xFs = require('xcraft-core-fs');
+const xPacman = require('xcraft-contrib-pacman');
 
 const WpkgBin = require('./lib/bin.js');
 
@@ -16,30 +18,33 @@ class Wpkg {
     const xEtc = require('xcraft-core-etc')(null, this._resp);
     this._xcraftConfig = xEtc.load('xcraft');
     this._pacmanConfig = xEtc.load('xcraft-contrib-pacman');
+
+    watt.wrapAll(this, 'listIndexPackages');
   }
 
   /**
    * Retrieve a list of packages available in a repository accordingly to filters.
    *
-   * @param {string} repositoryPath - Source repository.
+   * @param {string[]} repositoryPaths - Source repositories.
    * @param {string} arch - Architecture.
    * @param {Object} filters - Strings or regexps (in an object).
-   * @param {function(err, results)} callback - Async callback.
+   * @returns {Object} list of packages.
    */
-  listIndexPackages(repositoryPath, arch, filters, callback) {
-    const list = [];
+  *listIndexPackages(repositoryPaths, arch, filters) {
+    const list = {};
 
-    if (!fs.existsSync(repositoryPath)) {
-      callback('repository not found');
-      return;
+    for (const repositoryPath of repositoryPaths) {
+      if (!fs.existsSync(repositoryPath)) {
+        continue;
+      }
+
+      const _list = {};
+      const wpkg = new WpkgBin(this._resp);
+      yield wpkg.listIndexPackages(repositoryPath, arch, filters, _list);
+      list[repositoryPath] = _list;
     }
 
-    const wpkg = new WpkgBin(this._resp);
-
-    wpkg.listIndexPackages(repositoryPath, arch, filters, list, err => {
-      /* The list array is populated by listIndexPackages. */
-      callback(err, list);
-    });
+    return list;
   }
 
   /**
@@ -48,6 +53,7 @@ class Wpkg {
    * @param {string} packageName - Package name.
    * @param {string} packageVersion - Package version.
    * @param {string} archRoot - Architecture for the admin dir.
+   * @param {string} [distribution] - A specific distribution or null for default.
    * @param {string} [repositoryPath] - Path on the repository (null for default).
    * @param {function(err, deb)} callback - Async callback.
    */
@@ -55,12 +61,25 @@ class Wpkg {
     packageName,
     packageVersion,
     archRoot,
+    distribution,
     repositoryPath,
     callback
   ) {
-    const repository = repositoryPath || this._xcraftConfig.pkgDebRoot;
+    const repository =
+      repositoryPath || xPacman.getDebRoot(distribution, this._resp);
+
+    const repositories = [repository];
+    if (repository !== this._xcraftConfig.pkgDebRoot) {
+      repositories.push(this._xcraftConfig.pkgDebRoot);
+    }
+
+    if (!distribution) {
+      distribution = this._pacmanConfig.pkgToolchainRepository;
+    }
+    distribution = distribution.replace(/\/$/, '');
 
     const filters = {
+      distrib: new RegExp(`(${distribution}|sources)`),
       name: packageName,
       version: packageVersion,
       arch: new RegExp('(' + archRoot + '|all)'),
@@ -71,29 +90,35 @@ class Wpkg {
      * with the new way. Then we must look in the repository index file if
      * the package exists and in order to retrieve the full package name.
      */
-    this.listIndexPackages(repository, archRoot, filters, (err, list) => {
+    this.listIndexPackages(repositories, archRoot, filters, (err, list) => {
       if (err) {
         callback(err);
         return;
       }
 
-      let debFile = list[packageName];
-      if (!debFile) {
+      let _repository;
+      const exists = repositories.some(repository => {
+        _repository = repository;
+        return list[repository] && list[repository][packageName];
+      });
+
+      if (!exists) {
         this._resp.log.warn('the package %s is unavailable', packageName);
-        callback('package not found');
+        callback(new Error('package not found'));
         return;
       }
 
       /* We have found the package, then we can build the full path and install
        * this one to the target root.
        */
-      debFile = path.join(repository, debFile);
+      const debFile = path.join(_repository, list[_repository][packageName]);
       callback(null, debFile);
     });
   }
 
-  _build(packagePath, isSource, distribution, outputRepository, callback) {
-    const repositoryPath = outputRepository || this._xcraftConfig.pkgDebRoot;
+  _build(packagePath, isSource, outputRepository, distribution, callback) {
+    const repositoryPath =
+      outputRepository || xPacman.getDebRoot(distribution, this._resp);
     const pathObj = packagePath.split(path.sep);
 
     /* Retrieve the architecture which is in the packagePath. */
@@ -124,9 +149,9 @@ class Wpkg {
     if (isSource) {
       process.chdir(packagePath);
       envPath = xCMake.stripShForMinGW();
-      wpkg.buildSrc(repositoryPath, wpkgCallback);
+      wpkg.buildSrc(repositoryPath, distribution, wpkgCallback);
     } else {
-      wpkg.build(repositoryPath, packagePath, arch, wpkgCallback);
+      wpkg.build(repositoryPath, packagePath, arch, distribution, wpkgCallback);
     }
   }
 
@@ -134,24 +159,24 @@ class Wpkg {
    * Build a new standard package.
    *
    * @param {string} packagePath - Source package location.
-   * @param {string} distribution - Distribution name.
    * @param {string} [outputRepository] - null for default.
+   * @param {string} [distribution] - A specific distribution or null for default.
    * @param {function(err, results)} callback - Async callback.
    */
-  build(packagePath, distribution, outputRepository, callback) {
-    this._build(packagePath, false, distribution, outputRepository, callback);
+  build(packagePath, outputRepository, distribution, callback) {
+    this._build(packagePath, false, outputRepository, distribution, callback);
   }
 
   /**
    * Build a new source package.
    *
    * @param {string} packagePath - Source package location.
-   * @param {string} distribution - Always replaced by 'sources'.
    * @param {string} [outputRepository] - null for default.
+   * @param {string} [distribution] - A specific distribution or null for default.
    * @param {function(err, results)} callback - Async callback.
    */
-  buildSrc(packagePath, distribution, outputRepository, callback) {
-    this._build(packagePath, true, 'sources', outputRepository, callback);
+  buildSrc(packagePath, outputRepository, distribution, callback) {
+    this._build(packagePath, true, outputRepository, distribution, callback);
   }
 
   /**
@@ -167,11 +192,13 @@ class Wpkg {
     const envPath = xCMake.stripShForMinGW();
 
     if (!repository) {
-      repository = this._xcraftConfig.pkgDebRoot;
+      repository = xPacman.getDebRoot(distribution, this._resp);
     }
 
-    const wpkg = new WpkgBin(this._resp, null, {
-      PEON_DISTRIBUTION: distribution,
+    const targetRoot = xPacman.getTargetRoot(distribution, this._resp);
+
+    const wpkg = new WpkgBin(this._resp, targetRoot, {
+      PEON_DISTRIBUTION: distribution || '',
     });
 
     const wpkgCallback = err => {
@@ -188,18 +215,25 @@ class Wpkg {
         return;
       }
 
-      wpkg.build(null, repository, arch, wpkgCallback);
+      wpkg.build(null, repository, arch, distribution, wpkgCallback);
       return;
     }
 
-    this._lookForPackage(packageName, null, arch, null, (err, deb) => {
-      if (err) {
-        callback(err);
-        return;
-      }
+    this._lookForPackage(
+      packageName,
+      null,
+      arch,
+      distribution,
+      null,
+      (err, deb) => {
+        if (err) {
+          callback(err);
+          return;
+        }
 
-      wpkg.build(null, deb, arch, wpkgCallback);
-    });
+        wpkg.build(null, deb, arch, distribution, wpkgCallback);
+      }
+    );
   }
 
   /**
@@ -224,20 +258,32 @@ class Wpkg {
    *
    * @param {string} packageName - Package name.
    * @param {string} arch - Architecture.
+   * @param {string} [distribution] - A specific distribution or null for default.
    * @param {string} [targetRoot] - For production root (null for devroot).
    * @param {boolean} [reinstall] - Reinstall if already installed.
    * @param {function(err, results)} callback - Async callback.
    */
-  install(packageName, arch, targetRoot, reinstall, callback) {
-    this._lookForPackage(packageName, null, arch, null, (err, deb) => {
-      if (err) {
-        callback(err);
-        return;
-      }
+  install(packageName, arch, distribution, targetRoot, reinstall, callback) {
+    this._lookForPackage(
+      packageName,
+      null,
+      arch,
+      distribution,
+      null,
+      (err, deb) => {
+        if (err) {
+          callback(err);
+          return;
+        }
 
-      const wpkg = new WpkgBin(this._resp, targetRoot);
-      wpkg.install(deb, arch, reinstall, callback);
-    });
+        if (!targetRoot) {
+          targetRoot = xPacman.getTargetRoot(distribution, this._resp);
+        }
+
+        const wpkg = new WpkgBin(this._resp, targetRoot);
+        wpkg.install(deb, arch, distribution, reinstall, callback);
+      }
+    );
   }
 
   /**
@@ -245,10 +291,13 @@ class Wpkg {
    *
    * @param {string} packageName - Package name.
    * @param {string} arch - Architecture
+   * @param {string} [distribution] - A specific distribution or null for default.
    * @param {function(err, results)} callback - Async callback.
    */
-  isInstalled(packageName, arch, callback) {
-    const wpkg = new WpkgBin(this._resp);
+  isInstalled(packageName, arch, distribution, callback) {
+    const targetRoot = xPacman.getTargetRoot(distribution, this._resp);
+
+    const wpkg = new WpkgBin(this._resp, targetRoot);
 
     wpkg.isInstalled(packageName, arch, (err, code) => {
       if (err) {
@@ -265,11 +314,14 @@ class Wpkg {
    *
    * @param {string} packageName - Package name.
    * @param {string} arch - Architecture.
+   * @param {string} [distribution] - A specific distribution or null for default.
    * @param {boolean} [recursive] - Remove deps recursively.
    * @param {function(err, results)} callback - Async callback.
    */
-  remove(packageName, arch, recursive, callback) {
-    const wpkg = new WpkgBin(this._resp);
+  remove(packageName, arch, distribution, recursive, callback) {
+    const targetRoot = xPacman.getTargetRoot(distribution, this._resp);
+
+    const wpkg = new WpkgBin(this._resp, targetRoot);
     wpkg.remove(packageName, arch, recursive, callback);
   }
 
@@ -315,10 +367,13 @@ class Wpkg {
    *
    * @param {string[]} hooks - List of scripts paths.
    * @param {string} arch - Architecture.
+   * @param {string} [distribution] - A specific distribution or null for default.
    * @param {function(err, results)} callback - Async callback.
    */
-  addHooks(hooks, arch, callback) {
-    const wpkg = new WpkgBin(this._resp);
+  addHooks(hooks, arch, distribution, callback) {
+    const targetRoot = xPacman.getTargetRoot(distribution, this._resp);
+
+    const wpkg = new WpkgBin(this._resp, targetRoot);
     wpkg.addHooks(hooks, arch, callback);
   }
 
@@ -417,13 +472,14 @@ class Wpkg {
     callback
   ) {
     if (!outputRepository) {
-      outputRepository = this._xcraftConfig.pkgDebRoot;
+      outputRepository = xPacman.getDebRoot(distribution, this._resp);
     }
 
     this._lookForPackage(
       packageName,
       null,
       arch,
+      distribution,
       inputRepository,
       (err, deb) => {
         if (err) {
@@ -470,30 +526,37 @@ class Wpkg {
     callback
   ) {
     if (!repository) {
-      repository = this._xcraftConfig.pkgDebRoot;
+      repository = xPacman.getDebRoot(distribution, this._resp);
     }
 
-    this._lookForPackage(packageName, null, arch, repository, (err, deb) => {
-      if (err) {
-        callback(err);
-        return;
-      }
+    this._lookForPackage(
+      packageName,
+      null,
+      arch,
+      distribution,
+      repository,
+      (err, deb) => {
+        if (err) {
+          callback(err);
+          return;
+        }
 
-      try {
-        xFs.rm(deb);
-      } catch (ex) {
-        callback(ex.stack);
-        return;
-      }
+        try {
+          xFs.rm(deb);
+        } catch (ex) {
+          callback(ex.stack);
+          return;
+        }
 
-      if (updateIndex) {
-        const wpkg = new WpkgBin(this._resp);
-        /* We create or update the index with our new package(s). */
-        wpkg.createIndex(repository, this._pacmanConfig.pkgIndex, callback);
-      } else {
-        callback();
+        if (updateIndex) {
+          const wpkg = new WpkgBin(this._resp);
+          /* We create or update the index with our new package(s). */
+          wpkg.createIndex(repository, this._pacmanConfig.pkgIndex, callback);
+        } else {
+          callback();
+        }
       }
-    });
+    );
   }
 
   /**
@@ -502,14 +565,23 @@ class Wpkg {
    * @param {string} packageName - Package name.
    * @param {string} packageVersion - Package version.
    * @param {string} arch - Architecture.
-   * @param {string} repositoryPath - Path on the repository (or null).
+   * @param {string} [distribution] - A specific distribution or null for default.
+   * @param {string} [repositoryPath] - Path on the repository (or null).
    * @param {function(err, results)} callback - Async callback.
    */
-  isPublished(packageName, packageVersion, arch, repositoryPath, callback) {
+  isPublished(
+    packageName,
+    packageVersion,
+    arch,
+    distribution,
+    repositoryPath,
+    callback
+  ) {
     this._lookForPackage(
       packageName,
       packageVersion,
       arch,
+      distribution,
       repositoryPath,
       (err, deb) => {
         if (err) {
