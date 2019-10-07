@@ -104,7 +104,7 @@ class Wpkg {
 
       if (!exists) {
         this._resp.log.warn('the package %s is unavailable', packageName);
-        callback(new Error('package not found'));
+        callback('package not found');
         return;
       }
 
