@@ -311,6 +311,23 @@ class Wpkg {
   }
 
   /**
+   * Get some fields of a package.
+   *
+   * If the result is null, then the package is not available.
+   *
+   * @param {string} packageName - Package name.
+   * @param {string} arch - Architecture
+   * @param {string} [distribution] - A specific distribution or null for default.
+   * @param {function(err, results)} callback - Async callback.
+   */
+  fields(packageName, arch, distribution, callback) {
+    const targetRoot = xPacman.getTargetRoot(distribution, this._resp);
+
+    const wpkg = new WpkgBin(this._resp, targetRoot);
+    wpkg.fields(packageName, arch, callback);
+  }
+
+  /**
    * Remove a package.
    *
    * @param {string} packageName - Package name.
