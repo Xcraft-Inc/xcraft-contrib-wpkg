@@ -111,8 +111,9 @@ class Wpkg {
       /* We have found the package, then we can build the full path and install
        * this one to the target root.
        */
-      const debFile = path.join(_repository, list[_repository][packageName]);
-      callback(null, debFile);
+      const deb = list[_repository][packageName];
+      deb.file = path.join(_repository, deb.file);
+      callback(null, deb);
     });
   }
 
@@ -231,7 +232,7 @@ class Wpkg {
           return;
         }
 
-        wpkg.build(null, deb, arch, distribution, wpkgCallback);
+        wpkg.build(null, deb.file, arch, distribution, wpkgCallback);
       }
     );
   }
@@ -281,7 +282,7 @@ class Wpkg {
         }
 
         const wpkg = new WpkgBin(this._resp, targetRoot);
-        wpkg.install(deb, arch, distribution, reinstall, callback);
+        wpkg.install(deb.file, arch, distribution, reinstall, callback);
       }
     );
   }
@@ -490,7 +491,7 @@ class Wpkg {
         const dest = path.join(outputRepository, distribution);
         try {
           xFs.mkdir(dest);
-          xFs.cp(deb, path.join(dest, path.basename(deb)));
+          xFs.cp(deb.file, path.join(dest, path.basename(deb.file)));
         } catch (ex) {
           callback(ex.stack);
           return;
@@ -542,7 +543,7 @@ class Wpkg {
         }
 
         try {
-          xFs.rm(deb);
+          xFs.rm(deb.file);
         } catch (ex) {
           callback(ex.stack);
           return;
