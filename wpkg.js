@@ -566,6 +566,12 @@ class Wpkg {
           return;
         }
 
+        try {
+          xFs.rm(`${deb.file}.md5sum`);
+        } catch (ex) {
+          /* ignore errors */
+        }
+
         if (updateIndex) {
           const wpkg = new WpkgBin(this._resp);
           /* We create or update the index with our new package(s). */
