@@ -514,6 +514,13 @@ class Wpkg {
           return;
         }
 
+        try {
+          const md5sum = `${deb.file}.md5sum`;
+          xFs.cp(md5sum, path.join(dest, path.basename(md5sum)));
+        } catch (ex) {
+          /* ignore */
+        }
+
         const wpkg = new WpkgBin(this._resp);
         /* We create or update the index with our new package. */
         wpkg.createIndex(
