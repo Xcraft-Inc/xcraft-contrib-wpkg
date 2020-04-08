@@ -31,9 +31,9 @@
   "author": "Mathieu Schroeter",
   "license": "MIT",
   "devDependencies": {
-    "prettier": "1.18.2",
-    "xcraft-dev-prettier": "^1.0.0",
-    "xcraft-dev-rules": "^1.0.0"
+    "prettier": "2.0.4",
+    "xcraft-dev-prettier": "^2.0.0",
+    "xcraft-dev-rules": "^2.0.0"
   },
   "prettier": "xcraft-dev-prettier"
 }
