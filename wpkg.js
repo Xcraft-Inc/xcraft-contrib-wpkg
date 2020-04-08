@@ -97,7 +97,7 @@ class Wpkg {
       }
 
       let _repository;
-      const exists = repositories.some(repository => {
+      const exists = repositories.some((repository) => {
         _repository = repository;
         return list[repository] && list[repository][packageName];
       });
@@ -129,7 +129,7 @@ class Wpkg {
 
     const wpkg = new WpkgBin(this._resp);
 
-    const wpkgCallback = err => {
+    const wpkgCallback = (err) => {
       for (const p of envPath) {
         xEnv.var.path.insert(p.index, p.location);
       }
@@ -202,7 +202,7 @@ class Wpkg {
       PEON_DISTRIBUTION: distribution || '',
     });
 
-    const wpkgCallback = err => {
+    const wpkgCallback = (err) => {
       for (const p of envPath) {
         xEnv.var.path.insert(p.index, p.location);
       }
@@ -249,7 +249,7 @@ class Wpkg {
 
     const wpkg = new WpkgBin(this._resp);
 
-    wpkg.listFiles(packageName, arch, list, err => {
+    wpkg.listFiles(packageName, arch, list, (err) => {
       callback(err, list);
     });
   }
@@ -414,7 +414,7 @@ class Wpkg {
 
     async.auto(
       {
-        checkSources: callback => {
+        checkSources: (callback) => {
           const sourcesList = path.join(
             targetRoot,
             arch,
@@ -435,7 +435,7 @@ class Wpkg {
             }
 
             const wpkg = new WpkgBin(this._resp, targetRoot);
-            wpkg.listSources(arch, list, err => {
+            wpkg.listSources(arch, list, (err) => {
               callback(err, list);
             });
           },
@@ -627,4 +627,4 @@ class Wpkg {
   }
 }
 
-module.exports = resp => new Wpkg(resp);
+module.exports = (resp) => new Wpkg(resp);
