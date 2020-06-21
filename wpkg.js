@@ -328,6 +328,35 @@ class Wpkg {
   }
 
   /**
+   * Get fields of a package as a deep JSON.
+   *
+   * If the result is null, then the package is not available.
+   *
+   * @param {string} packageName - Package name.
+   * @param {string} arch - Architecture
+   * @param {string} [distribution] - A specific distribution or null for default.
+   * @param {function(err, results)} callback - Async callback.
+   */
+  show(packageName, arch, distribution, callback) {
+    this._lookForPackage(
+      packageName,
+      null,
+      arch,
+      distribution,
+      null,
+      (err, deb) => {
+        if (err) {
+          callback(err);
+          return;
+        }
+
+        const wpkg = new WpkgBin(this._resp, null);
+        wpkg.show(deb.file, callback);
+      }
+    );
+  }
+
+  /**
    * Remove a package.
    *
    * @param {string} packageName - Package name.
