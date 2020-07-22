@@ -11,6 +11,21 @@ const xPacman = require('xcraft-contrib-pacman');
 
 const WpkgBin = require('./lib/bin.js');
 
+class MapLimit extends Map {
+  constructor(max) {
+    super();
+    this._max = max;
+  }
+
+  set(key, value) {
+    while (this.size >= this._max) {
+      const it = this.entries();
+      this.delete(it.next().value[0]);
+    }
+    super.set(key, value);
+  }
+}
+
 class Wpkg {
   constructor(resp) {
     this._resp = resp;
@@ -18,6 +33,7 @@ class Wpkg {
     const xEtc = require('xcraft-core-etc')(null, this._resp);
     this._xcraftConfig = xEtc.load('xcraft');
     this._pacmanConfig = xEtc.load('xcraft-contrib-pacman');
+    this._cache = new MapLimit(100);
 
     watt.wrapAll(this, 'listIndexPackages');
   }
@@ -113,6 +129,12 @@ class Wpkg {
        */
       const deb = list[_repository][packageName];
       deb.file = path.join(_repository, deb.file);
+      try {
+        const hashFile = deb.file + '.md5sum';
+        deb.hash = fs.readFileSync(hashFile).toString().trim();
+      } catch (ex) {
+        /* ignore */
+      }
       callback(null, deb);
     });
   }
@@ -350,8 +372,20 @@ class Wpkg {
           return;
         }
 
+        if (deb.hash) {
+          if (this._cache.has(deb.hash)) {
+            callback(null, this._cache.get(deb.hash));
+            return;
+          }
+        }
+
         const wpkg = new WpkgBin(this._resp, null);
-        wpkg.show(deb.file, callback);
+        wpkg.show(deb.file, (err, def) => {
+          if (!err) {
+            this._cache.set(deb.hash, def);
+          }
+          callback(err, def);
+        });
       }
     );
   }
