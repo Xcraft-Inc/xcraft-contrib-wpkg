@@ -535,6 +535,18 @@ class Wpkg {
   }
 
   /**
+   * Upgrade the packages in the target root.
+   *
+   * @param {string} arch - Architecture.
+   * @param {string} [targetRoot] -  For production root (null for devroot).
+   * @param {function(err, results)} callback - Async callback.
+   */
+  upgrade(arch, targetRoot, callback) {
+    const wpkg = new WpkgBin(this._resp, targetRoot);
+    wpkg.upgrade(arch, callback);
+  }
+
+  /**
    * Publish a package in a specified repository.
    *
    * @param {string} packageName - Package name.
