@@ -4,8 +4,6 @@ const path = require('path');
 const fs = require('fs');
 const watt = require('gigawatts');
 
-const xCMake = require('xcraft-contrib-bootcmake');
-const xEnv = require('xcraft-core-env');
 const xFs = require('xcraft-core-fs');
 const xPacman = require('xcraft-contrib-pacman');
 
@@ -147,15 +145,10 @@ class Wpkg {
     /* Retrieve the architecture which is in the packagePath. */
     const arch = pathObj[pathObj.length - 2];
     const currentDir = process.cwd();
-    let envPath = [];
 
     const wpkg = new WpkgBin(this._resp);
 
     const wpkgCallback = (err) => {
-      for (const p of envPath) {
-        xEnv.var.path.insert(p.index, p.location);
-      }
-
       process.chdir(currentDir);
 
       if (err) {
@@ -171,7 +164,6 @@ class Wpkg {
 
     if (isSource) {
       process.chdir(packagePath);
-      envPath = xCMake.stripShForMinGW();
       wpkg.buildSrc(repositoryPath, distribution, wpkgCallback);
     } else {
       wpkg.build(repositoryPath, packagePath, arch, distribution, wpkgCallback);
@@ -212,8 +204,6 @@ class Wpkg {
    * @param {function(err, results)} callback - Async callback.
    */
   buildFromSrc(packageName, arch, repository, distribution, callback) {
-    const envPath = xCMake.stripShForMinGW();
-
     if (!repository) {
       repository = xPacman.getDebRoot(distribution, this._resp);
     }
@@ -224,13 +214,6 @@ class Wpkg {
       PEON_DISTRIBUTION: distribution || '',
     });
 
-    const wpkgCallback = (err) => {
-      for (const p of envPath) {
-        xEnv.var.path.insert(p.index, p.location);
-      }
-      callback(err);
-    };
-
     /* Without packageName we consider the build of all source packages. */
     if (!packageName) {
       if (!fs.existsSync(path.join(repository, 'sources'))) {
@@ -238,7 +221,7 @@ class Wpkg {
         return;
       }
 
-      wpkg.build(null, repository, arch, distribution, wpkgCallback);
+      wpkg.build(null, repository, arch, distribution, callback);
       return;
     }
 
@@ -254,7 +237,7 @@ class Wpkg {
           return;
         }
 
-        wpkg.build(null, deb.file, arch, distribution, wpkgCallback);
+        wpkg.build(null, deb.file, arch, distribution, callback);
       }
     );
   }
