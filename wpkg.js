@@ -33,7 +33,7 @@ class Wpkg {
     this._pacmanConfig = xEtc.load('xcraft-contrib-pacman');
     this._cache = new MapLimit(100);
 
-    watt.wrapAll(this, 'listIndexPackages');
+    watt.wrapAll(this, 'listIndexPackages', '_syncRepository');
   }
 
   /**
@@ -137,6 +137,70 @@ class Wpkg {
     });
   }
 
+  *_syncRepository(repositoryPath) {
+    const wpkg = new WpkgBin(this._resp);
+    const distributions = xFs.lsdir(repositoryPath);
+
+    for (const distribution of distributions) {
+      const packagesPath = path.join(repositoryPath, distribution);
+      const archivesPath = path.join(
+        repositoryPath.replace(/[\\/]?$/, '') + '-ar',
+        distribution
+      );
+      const packages = xFs.ls(packagesPath, /\.deb$/);
+      const list = {};
+
+      for (const pkg of packages) {
+        const result = pkg.match(/([^ _]*)_([^ _]*)(?:_([^ _]*))?\.deb$/);
+        const deb = {
+          distrib: distribution,
+          name: result[1],
+          version: result[2],
+          arch: result[3],
+          file: pkg,
+        };
+        if (!list[deb.name]) {
+          list[deb.name] = [];
+        }
+
+        list[deb.name].push(deb);
+      }
+
+      for (let debs of Object.keys(list)) {
+        debs = list[debs];
+
+        if (debs.length <= 1) {
+          continue;
+        }
+
+        let toCheck = debs[0];
+        for (let i = 1; i < debs.length; ++i) {
+          let toAr;
+
+          if (yield wpkg.isV1Greater(debs[i].version, toCheck.version)) {
+            toAr = toCheck;
+            toCheck = debs[i];
+          } else {
+            toAr = debs[i];
+          }
+
+          const src = path.join(packagesPath, toAr.file);
+          const dst = path.join(archivesPath, toAr.file);
+          xFs.mv(src, dst);
+          try {
+            xFs.mv(src + '.md5sum', dst + '.md5sum');
+          } catch (ex) {
+            if (ex.code !== 'ENOENT') {
+              throw ex;
+            }
+          }
+        }
+      }
+    }
+
+    return yield wpkg.createIndex(repositoryPath, this._pacmanConfig.pkgIndex);
+  }
+
   _build(packagePath, isSource, outputRepository, distribution, callback) {
     const repositoryPath =
       outputRepository || xPacman.getDebRoot(distribution, this._resp);
@@ -156,10 +220,8 @@ class Wpkg {
         return;
       }
 
-      const wpkg = new WpkgBin(this._resp);
-
       /* We create or update the index with our new package. */
-      wpkg.createIndex(repositoryPath, this._pacmanConfig.pkgIndex, callback);
+      this._syncRepository(repositoryPath, callback);
     };
 
     if (isSource) {
@@ -579,13 +641,8 @@ class Wpkg {
           /* ignore */
         }
 
-        const wpkg = new WpkgBin(this._resp);
         /* We create or update the index with our new package. */
-        wpkg.createIndex(
-          outputRepository,
-          this._pacmanConfig.pkgIndex,
-          callback
-        );
+        this._syncRepository(outputRepository, callback);
       }
     );
   }
@@ -638,9 +695,8 @@ class Wpkg {
         }
 
         if (updateIndex) {
-          const wpkg = new WpkgBin(this._resp);
           /* We create or update the index with our new package(s). */
-          wpkg.createIndex(repository, this._pacmanConfig.pkgIndex, callback);
+          this._syncRepository(repository, callback);
         } else {
           callback();
         }
