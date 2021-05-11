@@ -276,6 +276,19 @@ class Wpkg {
       PEON_DISTRIBUTION: distribution || '',
     });
 
+    const wpkgCallback = (err) => {
+      if (err) {
+        callback(err);
+        return;
+      }
+
+      /* We use getDebRoot because 'null' is passed to both wpkg.build calls. */
+      this._syncRepository(
+        xPacman.getDebRoot(distribution, this._resp),
+        callback
+      );
+    };
+
     /* Without packageName we consider the build of all source packages. */
     if (!packageName) {
       if (!fs.existsSync(path.join(repository, 'sources'))) {
@@ -283,7 +296,7 @@ class Wpkg {
         return;
       }
 
-      wpkg.build(null, repository, arch, distribution, callback);
+      wpkg.build(null, repository, arch, distribution, wpkgCallback);
       return;
     }
 
@@ -299,7 +312,7 @@ class Wpkg {
           return;
         }
 
-        wpkg.build(null, deb.file, arch, distribution, callback);
+        wpkg.build(null, deb.file, arch, distribution, wpkgCallback);
       }
     );
   }
