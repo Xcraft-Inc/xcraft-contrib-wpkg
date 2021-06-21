@@ -33,7 +33,7 @@ class Wpkg {
     this._pacmanConfig = xEtc.load('xcraft-contrib-pacman');
     this._cache = new MapLimit(100);
 
-    watt.wrapAll(this, 'listIndexPackages', '_syncRepository');
+    watt.wrapAll(this, 'graph', 'listIndexPackages', '_syncRepository');
   }
 
   /**
@@ -751,6 +751,42 @@ class Wpkg {
         callback(null, deb);
       }
     );
+  }
+
+  /**
+   * Generate a graph for a list of packages.
+   *
+   * @param {string} packageNames - Package name.
+   * @param {string} arch - Architecture.
+   * @param {string} [distribution] - A specific distribution or null for default.
+   */
+  *graph(packageNames, arch, distribution, next) {
+    const targetRoot = xPacman.getTargetRoot(distribution, this._resp);
+
+    const wpkg = new WpkgBin(this._resp, targetRoot);
+
+    const debs = [];
+    for (const packageName of packageNames) {
+      const distribs = [distribution, null];
+      for (const distrib of distribs) {
+        try {
+          const {file} = yield this._lookForPackage(
+            packageName,
+            null,
+            arch,
+            distrib,
+            null,
+            next
+          );
+          debs.push(file);
+          break;
+        } catch (ex) {
+          /* Ignore, we try with the next distribution */
+        }
+      }
+    }
+
+    yield wpkg.graph(debs, arch);
   }
 }
 
