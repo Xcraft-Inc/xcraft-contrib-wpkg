@@ -17,6 +17,7 @@
   "dependencies": {
     "async": "^1.4.0",
     "gigawatts": "^4.0.5",
+    "which": "^2.0.2",
     "xcraft-contrib-pacman": "^0.1.0",
     "xcraft-core-env": "^2.0.0",
     "xcraft-core-etc": "^2.0.0",
