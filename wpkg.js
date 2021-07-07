@@ -335,6 +335,25 @@ class Wpkg {
   }
 
   /**
+   * List root packages (data).
+   *
+   * @param {string} arch - Architecture.
+   * @param {string} [distribution] - A specific distribution or null for default.
+   * @param {string} [pattern] - Glob Unix Shell Pattern for filtering
+   * @param {function(err, results)} callback - Async callback.
+   */
+  list(arch, distribution, pattern, callback) {
+    const list = [];
+    const targetRoot = xPacman.getTargetRoot(distribution, this._resp);
+
+    const wpkg = new WpkgBin(this._resp, targetRoot);
+
+    wpkg.list(arch, pattern, list, (err) => {
+      callback(err, list);
+    });
+  }
+
+  /**
    * Install a package with its dependencies.
    *
    * @param {string} packageName - Package name.
