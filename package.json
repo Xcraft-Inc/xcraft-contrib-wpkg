@@ -15,7 +15,6 @@
     "url": "lib/xcraft-contrib-wpkg"
   },
   "dependencies": {
-    "async": "^1.4.0",
     "gigawatts": "^4.0.5",
     "which": "^2.0.2",
     "xcraft-contrib-pacman": "^0.4.0",

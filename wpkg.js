@@ -37,6 +37,7 @@ class Wpkg {
       this,
       'graph',
       'listIndexPackages',
+      'addSources',
       'removeSources',
       '_syncRepository'
     );
@@ -575,66 +576,51 @@ class Wpkg {
 
   /**
    * Add a new source in the target installation.
+   *
    * A source is needed in order to upgrade the packages in the target root
    * accordingly to the versions in the repository referenced in the source.
    *
    * @param {string} sourcePath - The new APT source entry to add.
    * @param {string} arch - Architecture.
-   * @param {string} [targetRoot] -  For production root (null for devroot).
-   * @param {function(err, results)} callback - Async callback.
+   * @param {string} [targetRoot] - For production root (null for devroot).
+   * @param {function(err, results)} next - watt.
    */
-  addSources(sourcePath, arch, targetRoot, callback) {
-    const async = require('async');
-
+  *addSources(sourcePath, arch, targetRoot, next) {
     if (!targetRoot) {
       targetRoot = this._xcraftConfig.pkgTargetRoot;
     }
 
-    async.auto(
-      {
-        checkSources: (callback) => {
-          const sourcesList = path.join(
-            targetRoot,
-            arch,
-            'var/lib/wpkg/core/sources.list'
-          );
-          const exists = fs.existsSync(sourcesList);
-          callback(null, exists);
-        },
-
-        listSources: [
-          'checkSources',
-          (callback, results) => {
-            const list = [];
-
-            if (!results.checkSources) {
-              callback(null, list);
-              return;
-            }
-
-            const wpkg = new WpkgBin(this._resp, targetRoot);
-            wpkg.listSources(arch, list, false, (err) => {
-              callback(err, list);
-            });
-          },
-        ],
-
-        addSources: [
-          'listSources',
-          (callback, results) => {
-            /* The list array is populated by listSources. */
-            if (results.listSources.indexOf(sourcePath) >= 0) {
-              callback();
-              return; /* already in the sources.list */
-            }
-
-            const wpkg = new WpkgBin(this._resp, targetRoot);
-            wpkg.addSources(sourcePath, arch, callback);
-          },
-        ],
-      },
-      callback
+    const sourcesList = path.join(
+      targetRoot,
+      arch,
+      'var/lib/wpkg/core/sources.list'
     );
+    let sources;
+    try {
+      sources = fs.readFileSync(sourcesList, 'utf8');
+    } catch (ex) {
+      if (ex.code === 'ENOENT') {
+        return;
+      }
+      throw ex;
+    }
+
+    /* We don't use listSources anymore because it uses the database lock */
+    // const list = [];
+    // yield wpkg.listSources(arch, list, false, next);
+    //
+    // /* The list array is populated by listSources. */
+    // if (list.indexOf(sourcePath) >= 0) {
+    //   return; /* already in the sources.list */
+    // }
+
+    const list = sources.split(/\n/).map((row) => row.trim());
+    if (list.indexOf(sourcePath) >= 0) {
+      return; /* already in the sources.list */
+    }
+
+    const wpkg = new WpkgBin(this._resp, targetRoot);
+    yield wpkg.addSources(sourcePath, arch, next);
   }
 
   /**
@@ -650,24 +636,35 @@ class Wpkg {
       targetRoot = this._xcraftConfig.pkgTargetRoot;
     }
 
-    const wpkg = new WpkgBin(this._resp, targetRoot);
+    const sourcesList = path.join(
+      targetRoot,
+      arch,
+      'var/lib/wpkg/core/sources.list'
+    );
+    const sources = fs.readFileSync(sourcesList, 'utf8');
 
-    let list = [];
-    yield wpkg.listSources(arch, list, true);
+    /* We don't use listSources anymore because it uses the database lock */
+    // let list = [];
+    // yield wpkg.listSources(arch, list, true);
+    //
+    // const _list = {};
+    // list.forEach((source) => {
+    //   const exploded = source.split('. ');
+    //   const it = parseInt(exploded[0]);
+    //   if (!Number.isNaN(it)) {
+    //     const it = exploded.shift();
+    //   }
+    //     _list[exploded.join('. ')] = parseInt(it) - 1;
+    // });
 
-    const _list = {};
-    list.forEach((source) => {
-      const exploded = source.split('. ');
-      const it = parseInt(exploded[0]);
-      if (!Number.isNaN(it)) {
-        const it = exploded.shift();
-        _list[exploded.join('. ')] = parseInt(it) - 1;
-      }
-    });
-
-    if (_list.hasOwnProperty(sourcePath)) {
-      yield wpkg.removeSources(_list[sourcePath], arch, next);
+    const list = sources.split(/\n/).map((row) => row.trim());
+    const it = list.indexOf(sourcePath) - 1;
+    if (it < 0) {
+      return;
     }
+
+    const wpkg = new WpkgBin(this._resp, targetRoot);
+    yield wpkg.removeSources(it, arch, next);
   }
 
   /**
