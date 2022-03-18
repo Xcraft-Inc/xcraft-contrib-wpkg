@@ -33,7 +33,13 @@ class Wpkg {
     this._pacmanConfig = xEtc.load('xcraft-contrib-pacman');
     this._cache = new MapLimit(100);
 
-    watt.wrapAll(this, 'graph', 'listIndexPackages', '_syncRepository');
+    watt.wrapAll(
+      this,
+      'graph',
+      'listIndexPackages',
+      'removeSources',
+      '_syncRepository'
+    );
   }
 
   /**
@@ -607,7 +613,7 @@ class Wpkg {
             }
 
             const wpkg = new WpkgBin(this._resp, targetRoot);
-            wpkg.listSources(arch, list, (err) => {
+            wpkg.listSources(arch, list, false, (err) => {
               callback(err, list);
             });
           },
@@ -629,6 +635,39 @@ class Wpkg {
       },
       callback
     );
+  }
+
+  /**
+   * Remove a source from the target installation.
+   *
+   * @param {string} sourcePath - The new APT source entry to add.
+   * @param {string} arch - Architecture.
+   * @param {string} [targetRoot] -  For production root (null for devroot).
+   * @param {function(err, results)} next - watt.
+   */
+  *removeSources(sourcePath, arch, targetRoot, next) {
+    if (!targetRoot) {
+      targetRoot = this._xcraftConfig.pkgTargetRoot;
+    }
+
+    const wpkg = new WpkgBin(this._resp, targetRoot);
+
+    let list = [];
+    yield wpkg.listSources(arch, list, true);
+
+    const _list = {};
+    list.forEach((source) => {
+      const exploded = source.split('. ');
+      const it = parseInt(exploded[0]);
+      if (!Number.isNaN(it)) {
+        const it = exploded.shift();
+        _list[exploded.join('. ')] = parseInt(it) - 1;
+      }
+    });
+
+    if (_list.hasOwnProperty(sourcePath)) {
+      yield wpkg.removeSources(_list[sourcePath], arch, next);
+    }
   }
 
   /**
