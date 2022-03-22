@@ -395,6 +395,8 @@ class Wpkg {
   /**
    * Install a package with its dependencies.
    *
+   * The full local path is computed accordingly by using the local repository.
+   *
    * @param {string} packageName - Package name.
    * @param {string} arch - Architecture.
    * @param {string} [distribution] - A specific distribution or null for default.
@@ -423,6 +425,36 @@ class Wpkg {
         wpkg.install(deb.file, arch, distribution, reinstall, callback);
       }
     );
+  }
+
+  /**
+   * Install a package with its dependencies (only with the package name).
+   *
+   * This function is used in the case of external repositories. It should be
+   * possible to use _lookForPackage like with the install method but the
+   * http support is not implemented.
+   *
+   * @param {string} packageName - Package name.
+   * @param {string} arch - Architecture.
+   * @param {string} [distribution] - A specific distribution or null for default.
+   * @param {string} [targetRoot] - For production root (null for devroot).
+   * @param {boolean} [reinstall] - Reinstall if already installed.
+   * @param {function(err, results)} callback - Async callback.
+   */
+  installByName(
+    packageName,
+    arch,
+    distribution,
+    targetRoot,
+    reinstall,
+    callback
+  ) {
+    if (!targetRoot) {
+      targetRoot = xPacman.getTargetRoot(distribution, this._resp);
+    }
+
+    const wpkg = new WpkgBin(this._resp, targetRoot);
+    wpkg.install(packageName, arch, distribution, reinstall, callback);
   }
 
   /**
