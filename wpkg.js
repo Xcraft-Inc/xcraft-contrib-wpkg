@@ -39,6 +39,8 @@ class Wpkg {
       'listIndexPackages',
       'addSources',
       'removeSources',
+      '_moveToArchiving',
+      '_archiving',
       '_syncRepository'
     );
   }
@@ -144,10 +146,34 @@ class Wpkg {
     });
   }
 
-  *_syncRepository(repositoryPath) {
-    const wpkg = new WpkgBin(this._resp);
-    const distributions = xFs.lsdir(repositoryPath);
+  *_moveToArchiving(wpkg, packagesPath, deb, backLink = false) {
+    const tryfs = (action, ...args) => {
+      xFs[action](...args);
+      try {
+        xFs[action](...args.map((file) => file + '.md5sum'));
+      } catch (ex) {
+        if (ex.code !== 'ENOENT') {
+          throw ex;
+        }
+      }
+    };
 
+    const archivePath = path.join(packagesPath, deb.name, deb.version);
+    const src = path.join(packagesPath, deb.file);
+    const dst = path.join(archivePath, deb.file);
+
+    if (fs.existsSync(dst)) {
+      if (!backLink) {
+        tryfs('rm', src);
+      }
+      return;
+    }
+
+    tryfs(backLink ? 'cp' : 'mv', src, dst);
+    yield wpkg.createIndex(archivePath, this._pacmanConfig.pkgIndex);
+  }
+
+  *_archiving(wpkg, repositoryPath, distributions) {
     for (const distribution of distributions) {
       const packagesPath = path.join(repositoryPath, distribution);
       const packages = xFs.ls(packagesPath, /\.deb$/);
@@ -161,6 +187,7 @@ class Wpkg {
           version: result[2],
           arch: result[3],
           file: pkg,
+          previous: undefined,
         };
         if (!list[deb.name]) {
           list[deb.name] = [];
@@ -169,38 +196,44 @@ class Wpkg {
         list[deb.name].push(deb);
       }
 
-      for (let debs of Object.keys(list)) {
-        debs = list[debs];
+      for (const name of Object.keys(list)) {
+        const debs = list[name];
 
-        if (debs.length <= 1) {
-          continue;
-        }
+        if (debs.length > 1) {
+          let toCheck = debs[0];
+          for (let i = 1; i < debs.length; ++i) {
+            let toAr;
 
-        let toCheck = debs[0];
-        for (let i = 1; i < debs.length; ++i) {
-          let toAr;
-
-          if (yield wpkg.isV1Greater(debs[i].version, toCheck.version)) {
-            toAr = toCheck;
-            toCheck = debs[i];
-          } else {
-            toAr = debs[i];
-          }
-
-          const archivePath = path.join(packagesPath, toAr.name, toAr.version);
-          const src = path.join(packagesPath, toAr.file);
-          const dst = path.join(archivePath, toAr.file);
-          xFs.mv(src, dst);
-          try {
-            xFs.mv(src + '.md5sum', dst + '.md5sum');
-          } catch (ex) {
-            if (ex.code !== 'ENOENT') {
-              throw ex;
+            if (yield wpkg.isV1Greater(debs[i].version, toCheck.version)) {
+              toAr = toCheck;
+              toCheck = debs[i];
+            } else {
+              toAr = debs[i];
             }
+
+            toAr.previous = true;
+            yield this._moveToArchiving(wpkg, packagesPath, toAr, false);
           }
-          yield wpkg.createIndex(archivePath, this._pacmanConfig.pkgIndex);
         }
+
+        const latest = debs.find((deb) => !deb.previous);
+        if (!latest) {
+          throw new Error(
+            `At least one version of ${name} must exist in the main repository`
+          );
+        }
+
+        yield this._moveToArchiving(wpkg, packagesPath, latest, true);
       }
+    }
+  }
+
+  *_syncRepository(repositoryPath, archiving = true) {
+    const wpkg = new WpkgBin(this._resp);
+    const distributions = xFs.lsdir(repositoryPath);
+
+    if (archiving) {
+      yield this._archiving(wpkg, repositoryPath, distributions);
     }
 
     return yield wpkg.createIndex(repositoryPath, this._pacmanConfig.pkgIndex);
@@ -729,6 +762,7 @@ class Wpkg {
    * @param {string} inputRepository - Source repository.
    * @param {string} outputRepository - Destination repository.
    * @param {string} distribution - Distribution name.
+   * @param {boolean} archiving - Enable repository archiving.
    * @param {function(err, results)} callback - Async callback.
    */
   publish(
@@ -737,6 +771,7 @@ class Wpkg {
     inputRepository,
     outputRepository,
     distribution,
+    archiving = true,
     callback
   ) {
     if (!outputRepository) {
@@ -772,7 +807,7 @@ class Wpkg {
         }
 
         /* We create or update the index with our new package. */
-        this._syncRepository(outputRepository, callback);
+        this._syncRepository(outputRepository, archiving, callback);
       }
     );
   }
@@ -785,6 +820,7 @@ class Wpkg {
    * @param {string} repository - Source repository.
    * @param {string} distribution - Distribution name.
    * @param {boolean} updateIndex - True to call createIndex (slow).
+   * @param {boolean} archiving - Enable repository archiving.
    * @param {function(err, results)} callback - Async callback.
    */
   unpublish(
@@ -793,6 +829,7 @@ class Wpkg {
     repository,
     distribution,
     updateIndex,
+    archiving = true,
     callback
   ) {
     if (!repository) {
@@ -826,7 +863,7 @@ class Wpkg {
 
         if (updateIndex) {
           /* We create or update the index with our new package(s). */
-          this._syncRepository(repository, callback);
+          this._syncRepository(repository, archiving, callback);
         } else {
           callback();
         }
