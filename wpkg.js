@@ -177,7 +177,8 @@ class Wpkg {
     for (const distribution of distributions) {
       const archivesPath = path.join(
         path.dirname(repositoryPath),
-        path.basename(repositoryPath) + '@ver'
+        'wpkg@ver',
+        distribution
       );
       const packagesPath = path.join(repositoryPath, distribution);
       const packages = xFs.ls(packagesPath, /\.deb$/);
