@@ -146,7 +146,7 @@ class Wpkg {
     });
   }
 
-  *_moveToArchiving(wpkg, packagesPath, deb, backLink = false) {
+  *_moveToArchiving(wpkg, packagesPath, archivesPath, deb, backLink = false) {
     const tryfs = (action, ...args) => {
       xFs[action](...args);
       try {
@@ -158,7 +158,7 @@ class Wpkg {
       }
     };
 
-    const archivePath = path.join(packagesPath, deb.name, deb.version);
+    const archivePath = path.join(archivesPath, deb.name, deb.version);
     const src = path.join(packagesPath, deb.file);
     const dst = path.join(archivePath, deb.file);
 
@@ -175,6 +175,10 @@ class Wpkg {
 
   *_archiving(wpkg, repositoryPath, distributions) {
     for (const distribution of distributions) {
+      const archivesPath = path.join(
+        path.dirname(repositoryPath),
+        path.basename(repositoryPath) + '@ver'
+      );
       const packagesPath = path.join(repositoryPath, distribution);
       const packages = xFs.ls(packagesPath, /\.deb$/);
       const list = {};
@@ -212,7 +216,13 @@ class Wpkg {
             }
 
             toAr.previous = true;
-            yield this._moveToArchiving(wpkg, packagesPath, toAr, false);
+            yield this._moveToArchiving(
+              wpkg,
+              packagesPath,
+              archivesPath,
+              toAr,
+              false
+            );
           }
         }
 
@@ -223,19 +233,21 @@ class Wpkg {
           );
         }
 
-        yield this._moveToArchiving(wpkg, packagesPath, latest, true);
+        yield this._moveToArchiving(
+          wpkg,
+          packagesPath,
+          archivesPath,
+          latest,
+          true
+        );
       }
     }
   }
 
-  *_syncRepository(repositoryPath, archiving = true) {
+  *_syncRepository(repositoryPath) {
     const wpkg = new WpkgBin(this._resp);
     const distributions = xFs.lsdir(repositoryPath);
-
-    if (archiving) {
-      yield this._archiving(wpkg, repositoryPath, distributions);
-    }
-
+    yield this._archiving(wpkg, repositoryPath, distributions);
     return yield wpkg.createIndex(repositoryPath, this._pacmanConfig.pkgIndex);
   }
 
@@ -762,7 +774,6 @@ class Wpkg {
    * @param {string} inputRepository - Source repository.
    * @param {string} outputRepository - Destination repository.
    * @param {string} distribution - Distribution name.
-   * @param {boolean} archiving - Enable repository archiving.
    * @param {function(err, results)} callback - Async callback.
    */
   publish(
@@ -771,7 +782,6 @@ class Wpkg {
     inputRepository,
     outputRepository,
     distribution,
-    archiving = true,
     callback
   ) {
     if (!outputRepository) {
@@ -807,7 +817,7 @@ class Wpkg {
         }
 
         /* We create or update the index with our new package. */
-        this._syncRepository(outputRepository, archiving, callback);
+        this._syncRepository(outputRepository, callback);
       }
     );
   }
@@ -820,7 +830,6 @@ class Wpkg {
    * @param {string} repository - Source repository.
    * @param {string} distribution - Distribution name.
    * @param {boolean} updateIndex - True to call createIndex (slow).
-   * @param {boolean} archiving - Enable repository archiving.
    * @param {function(err, results)} callback - Async callback.
    */
   unpublish(
@@ -829,7 +838,6 @@ class Wpkg {
     repository,
     distribution,
     updateIndex,
-    archiving = true,
     callback
   ) {
     if (!repository) {
@@ -863,7 +871,7 @@ class Wpkg {
 
         if (updateIndex) {
           /* We create or update the index with our new package(s). */
-          this._syncRepository(repository, archiving, callback);
+          this._syncRepository(repository, callback);
         } else {
           callback();
         }
