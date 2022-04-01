@@ -150,10 +150,6 @@ class Wpkg {
 
     for (const distribution of distributions) {
       const packagesPath = path.join(repositoryPath, distribution);
-      const archivesPath = path.join(
-        repositoryPath.replace(/[\\/]?$/, '') + '-ar',
-        distribution
-      );
       const packages = xFs.ls(packagesPath, /\.deb$/);
       const list = {};
 
@@ -191,8 +187,9 @@ class Wpkg {
             toAr = debs[i];
           }
 
+          const archivePath = path.join(packagesPath, toAr.name, toAr.version);
           const src = path.join(packagesPath, toAr.file);
-          const dst = path.join(archivesPath, toAr.file);
+          const dst = path.join(archivePath, toAr.file);
           xFs.mv(src, dst);
           try {
             xFs.mv(src + '.md5sum', dst + '.md5sum');
@@ -201,6 +198,7 @@ class Wpkg {
               throw ex;
             }
           }
+          yield wpkg.createIndex(archivePath, this._pacmanConfig.pkgIndex);
         }
       }
     }
