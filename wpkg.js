@@ -671,14 +671,13 @@ class Wpkg {
       arch,
       'var/lib/wpkg/core/sources.list'
     );
-    let sources;
+    let sources = '';
     try {
       sources = fs.readFileSync(sourcesList, 'utf8');
     } catch (ex) {
-      if (ex.code === 'ENOENT') {
-        return;
+      if (ex.code !== 'ENOENT') {
+        throw ex;
       }
-      throw ex;
     }
 
     /* We don't use listSources anymore because it uses the database lock */
