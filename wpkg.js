@@ -39,6 +39,7 @@ class Wpkg {
       'listIndexPackages',
       'addSources',
       'removeSources',
+      'isV1Greater',
       '_moveToArchiving',
       '_archiving',
       '_syncRepository'
@@ -949,6 +950,11 @@ class Wpkg {
     }
 
     yield wpkg.graph(debs, arch);
+  }
+
+  *isV1Greater(v1, v2) {
+    const wpkg = new WpkgBin(this._resp);
+    return yield wpkg.isV1Greater(v1, v2);
   }
 }
 
