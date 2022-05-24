@@ -159,9 +159,10 @@ class Wpkg {
       }
     };
 
-    const archivePath = path.join(archivesPath, deb.name, deb.version);
+    const archivePkgPath = path.join(archivesPath, deb.name);
+    const archiveVerPath = path.join(archivePkgPath, deb.version);
     const src = path.join(packagesPath, deb.file);
-    const dst = path.join(archivePath, deb.file);
+    const dst = path.join(archiveVerPath, deb.file);
 
     if (fs.existsSync(dst)) {
       if (!backLink) {
@@ -171,7 +172,27 @@ class Wpkg {
     }
 
     tryfs(backLink ? 'cp' : 'mv', src, dst);
-    yield wpkg.createIndex(archivePath, this._pacmanConfig.pkgIndex);
+    yield wpkg.createIndex(archiveVerPath, this._pacmanConfig.pkgIndex);
+
+    /* Update pacman package index for the list of versions */
+    const indexJson = path.join(archivePkgPath, 'index.json');
+    const _base = (v) => v.replace(/-[^-]*/, '');
+    let _list = {};
+    try {
+      _list = xFs.fse.readJSONSync(indexJson);
+    } catch {
+      /* Use a new empty file */
+    }
+    xFs.lsdir(archivePkgPath).reduce((list, version) => {
+      const base = _base(version);
+      if (!list[base]) {
+        list[base] = {latest: '', versions: []};
+      }
+      list[base].versions.push(version);
+      return list;
+    }, _list);
+    _list[_base(deb.version)].latest = deb.version;
+    xFs.fse.writeJSONSync(indexJson, _list, {spaces: 2});
   }
 
   *_archiving(wpkg, repositoryPath, distributions) {
