@@ -187,6 +187,8 @@ class Wpkg {
       const base = _base(version);
       if (!list[base]) {
         list[base] = {latest: '', versions: []};
+      } else if (!list[base].versions) {
+        list[base].versions = [];
       }
       list[base].versions.push(version);
       return list;
