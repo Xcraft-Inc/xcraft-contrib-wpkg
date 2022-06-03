@@ -17,7 +17,7 @@
   "dependencies": {
     "gigawatts": "^4.0.5",
     "which": "^2.0.2",
-    "xcraft-contrib-pacman": "^0.4.0",
+    "xcraft-contrib-pacman": "^1.0.0",
     "xcraft-core-etc": "^3.0.0",
     "xcraft-core-fs": "^2.0.0",
     "xcraft-core-placeholder": "^1.0.0",
