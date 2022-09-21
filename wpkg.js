@@ -183,12 +183,14 @@ class Wpkg {
     } catch {
       /* Use a new empty file */
     }
+    const baseVersions = {};
     xFs.lsdir(archivePkgPath).reduce((list, version) => {
       const base = _base(version);
       if (!list[base]) {
         list[base] = {latest: '', versions: []};
-      } else if (!list[base].versions) {
+      } else if (!list[base].versions || !baseVersions[base]) {
         list[base].versions = [];
+        baseVersions[base] = true;
       }
       list[base].versions.push(version);
       return list;
