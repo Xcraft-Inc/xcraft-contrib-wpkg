@@ -137,6 +137,7 @@ class Wpkg {
        */
       const deb = list[_repository][packageName];
       deb.file = path.join(_repository, deb.file);
+      deb.repository = _repository;
       deb.distribution = distribution;
       try {
         const hashFile = deb.file + '.md5sum';
@@ -575,19 +576,47 @@ class Wpkg {
    *
    * @param {string} packageName - Package name.
    * @param {string} arch - Architecture
+   * @param {string} [version] - Version
    * @param {string} [distribution] - A specific distribution or null for default.
    * @param {function(err, results)} callback - Async callback.
    */
-  show(packageName, arch, distribution, callback) {
+  show(packageName, arch, version, distribution, callback) {
+    let repository = null;
+
+    if (version) {
+      const xEtc = require('xcraft-core-etc')();
+      const xConfig = xEtc.load('xcraft');
+
+      if (!distribution) {
+        distribution = this._pacmanConfig.pkgToolchainRepository;
+      }
+      distribution = distribution.replace(/\/$/, '');
+
+      repository = path.join(
+        path.dirname(xConfig.pkgDebRoot),
+        'wpkg@ver',
+        distribution,
+        packageName,
+        version
+      );
+    }
+
     this._lookForPackage(
       packageName,
-      null,
+      version,
       arch,
       distribution,
-      null,
+      repository,
       (err, deb) => {
         if (err) {
           callback(err);
+          return;
+        }
+
+        if (version && deb.repository !== repository) {
+          callback(
+            `package ${packageName} not found in ${distribution} for  the version ${version}`
+          );
           return;
         }
 
