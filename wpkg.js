@@ -137,6 +137,7 @@ class Wpkg {
        */
       const deb = list[_repository][packageName];
       deb.file = path.join(_repository, deb.file);
+      deb.distribution = distribution;
       try {
         const hashFile = deb.file + '.md5sum';
         deb.hash = fs.readFileSync(hashFile).toString().trim();
@@ -598,7 +599,7 @@ class Wpkg {
         }
 
         const wpkg = new WpkgBin(this._resp, null);
-        wpkg.show(deb.file, (err, def) => {
+        wpkg.show(deb.file, deb.distribution, (err, def) => {
           if (!err) {
             this._cache.set(deb.hash, def);
           }
