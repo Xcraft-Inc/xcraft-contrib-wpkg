@@ -977,6 +977,7 @@ class Wpkg {
    * @param {string} packageNames - Package name.
    * @param {string} arch - Architecture.
    * @param {string} [distribution] - A specific distribution or null for default.
+   * @param {function} next - Watt's callback.
    */
   *graph(packageNames, arch, distribution, next) {
     const targetRoot = xPacman.getTargetRoot(distribution, this._resp);
