@@ -198,6 +198,7 @@ class Wpkg {
       return list;
     }, _list);
     _list[_base(deb.version)].latest = deb.version;
+    _list.latest = _base(deb.version);
     xFs.fse.writeJSONSync(indexJson, _list, {spaces: 2});
   }
 
