@@ -210,25 +210,28 @@ class Wpkg {
         distribution
       );
       const packagesPath = path.join(repositoryPath, distribution);
-      const packages = xFs.ls(packagesPath, /\.deb$/);
-      const list = {};
+      const list = xFs
+        .ls(packagesPath, /\.deb$/)
+        .map((pkg) => {
+          const m = pkg.match(/([^ _]*)_([^ _]*)(?:_([^ _]*))?\.deb$/);
+          return {
+            distrib: distribution,
+            name: m[1],
+            version: m[2],
+            arch: m[3],
+            file: pkg,
+            previous: undefined,
+          };
+        })
+        .filter((pkg) => !pkg.name.endsWith('-stub'))
+        .reduce((list, pkg) => {
+          if (!list[pkg.name]) {
+            list[pkg.name] = [];
+          }
 
-      for (const pkg of packages) {
-        const result = pkg.match(/([^ _]*)_([^ _]*)(?:_([^ _]*))?\.deb$/);
-        const deb = {
-          distrib: distribution,
-          name: result[1],
-          version: result[2],
-          arch: result[3],
-          file: pkg,
-          previous: undefined,
-        };
-        if (!list[deb.name]) {
-          list[deb.name] = [];
-        }
-
-        list[deb.name].push(deb);
-      }
+          list[pkg.name].push(pkg);
+          return list;
+        }, {});
 
       for (const name of Object.keys(list)) {
         const debs = list[name];
