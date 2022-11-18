@@ -182,6 +182,19 @@ class Wpkg {
     let _list = {};
     try {
       _list = xFs.fse.readJSONSync(indexJson);
+      /* Remove versions that no longer exists */
+      for (const entry of Object.values(_list)) {
+        if (!entry.versions) {
+          continue;
+        }
+        const versions = [];
+        for (const version of entry.versions) {
+          if (xFs.fse.existsSync(path.join(archivePkgPath, version))) {
+            versions.push(version);
+          }
+        }
+        entry.versions = versions;
+      }
     } catch {
       /* Use a new empty file */
     }
