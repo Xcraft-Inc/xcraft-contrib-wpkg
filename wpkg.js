@@ -277,6 +277,30 @@ class Wpkg {
     }
   }
 
+  listArchiveVersions(packageName, distribution) {
+    const repositoryPath = xPacman.getDebRoot(distribution, this._resp);
+    const archivesPath = path.join(
+      path.dirname(repositoryPath),
+      'wpkg@ver',
+      distribution
+    );
+    const indexJson = path.join(archivesPath, packageName, 'index.json');
+
+    try {
+      const index = xFs.fse.readJSONSync(indexJson);
+      let list = [];
+      for (const key of Object.keys(index).filter((v) => v !== 'latest')) {
+        list = list.concat(index[key].versions);
+      }
+      return list;
+    } catch (ex) {
+      if (ex.code !== 'ENOENT') {
+        throw ex;
+      }
+      return [];
+    }
+  }
+
   *_syncRepository(repositoryPath) {
     const wpkg = new WpkgBin(this._resp);
     const distributions = xFs.lsdir(repositoryPath);
