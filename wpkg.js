@@ -8,6 +8,7 @@ const xFs = require('xcraft-core-fs');
 const xPacman = require('xcraft-contrib-pacman');
 
 const WpkgBin = require('./lib/bin.js');
+const {getToolchainArch} = require('xcraft-core-platform');
 
 class MapLimit extends Map {
   constructor(max) {
@@ -76,7 +77,7 @@ class Wpkg {
    *
    * @param {string} packageName - Package name.
    * @param {string} packageVersion - Package version.
-   * @param {string} archRoot - Architecture for the admin dir.
+   * @param {string} [archRoot] - Architecture for the admin dir.
    * @param {string} [distribution] - A specific distribution or null for default.
    * @param {string} [repositoryPath] - Path on the repository (null for default).
    * @param {function(err, deb)} callback - Async callback.
@@ -101,6 +102,10 @@ class Wpkg {
       distribution = this._pacmanConfig.pkgToolchainRepository;
     }
     distribution = distribution.replace(/\/$/, '');
+
+    if (!archRoot) {
+      archRoot = getToolchainArch();
+    }
 
     const filters = {
       distrib: new RegExp(`(${distribution}|sources)`),
@@ -981,7 +986,7 @@ class Wpkg {
    *
    * @param {string} packageName - Package name.
    * @param {string} packageVersion - Package version.
-   * @param {string} arch - Architecture.
+   * @param {string} [arch] - Architecture.
    * @param {string} [distribution] - A specific distribution or null for default.
    * @param {string} [repositoryPath] - Path on the repository (or null).
    * @param {function(err, results)} callback - Async callback.
