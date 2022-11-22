@@ -362,7 +362,7 @@ class Wpkg {
       }
     }
 
-    xFs.mv(archiveVerPath, path.join(destinationDir, version));
+    xFs.mv(archiveVerPath, path.join(destinationDir, name, version));
     xFs.fse.writeJSONSync(indexJson, index, {spaces: 2});
   }
 
