@@ -366,7 +366,13 @@ class Wpkg {
       }
     }
 
-    xFs.mv(archiveVerPath, path.join(destinationDir, name, version));
+    try {
+      xFs.mv(archiveVerPath, path.join(destinationDir, name, version));
+    } catch (ex) {
+      if (ex.code !== 'ENOENT') {
+        throw ex;
+      }
+    }
     xFs.fse.writeJSONSync(indexJson, index, {spaces: 2});
   }
 
