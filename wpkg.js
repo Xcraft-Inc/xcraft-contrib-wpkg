@@ -340,17 +340,26 @@ class Wpkg {
     if (it === -1) {
       return;
     }
-    const isLatest = version === index[baseVersion].latest;
+
+    /* The very last */
+    const isLatest = baseVersion === index.latest;
+    /* The last for this base version */
+    const isBaseLatest = version === index[baseVersion].latest;
+
     index[baseVersion].versions.splice(it, 1);
-    if (isLatest) {
-      const length = index[baseVersion].versions.length;
-      if (length === 0) {
-        this._quest.log.warn(
+    if (isBaseLatest) {
+      if (isLatest) {
+        this._resp.log.warn(
           `${name} ${version} cannot be moved because it's the last one`
         );
         return;
       }
-      index[baseVersion].latest = index[baseVersion].versions[length - 1];
+      const length = index[baseVersion].versions.length;
+      if (length === 0) {
+        delete index[baseVersion];
+      } else {
+        index[baseVersion].latest = index[baseVersion].versions[length - 1];
+      }
     }
 
     xFs.mv(archiveVerPath, path.join(destinationDir, version));
