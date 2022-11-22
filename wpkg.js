@@ -154,6 +154,10 @@ class Wpkg {
     });
   }
 
+  static _baseVersion(v) {
+    return v.replace(/-[^-]*/, '');
+  }
+
   *_moveToArchiving(wpkg, packagesPath, archivesPath, deb, backLink = false) {
     const tryfs = (action, ...args) => {
       xFs[action](...args);
@@ -183,7 +187,6 @@ class Wpkg {
 
     /* Update pacman package index for the list of versions */
     const indexJson = path.join(archivePkgPath, 'index.json');
-    const _base = (v) => v.replace(/-[^-]*/, '');
     let _list = {};
     try {
       _list = xFs.fse.readJSONSync(indexJson);
@@ -205,7 +208,7 @@ class Wpkg {
     }
     const baseVersions = {};
     xFs.lsdir(archivePkgPath).reduce((list, version) => {
-      const base = _base(version);
+      const base = Wpkg._baseVersion(version);
       if (!list[base]) {
         list[base] = {latest: '', versions: []};
       } else if (!list[base].versions || !baseVersions[base]) {
@@ -215,8 +218,8 @@ class Wpkg {
       list[base].versions.push(version);
       return list;
     }, _list);
-    _list[_base(deb.version)].latest = deb.version;
-    _list.latest = _base(deb.version);
+    _list[Wpkg._baseVersion(deb.version)].latest = deb.version;
+    _list.latest = Wpkg._baseVersion(deb.version);
     xFs.fse.writeJSONSync(indexJson, _list, {spaces: 2});
   }
 
