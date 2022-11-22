@@ -322,6 +322,41 @@ class Wpkg {
     }
   }
 
+  moveArchive(name, version, distribution, destinationDir) {
+    const repositoryPath = xPacman.getDebRoot(distribution, this._resp);
+    const archivesPath = path.join(
+      path.dirname(repositoryPath),
+      'wpkg@ver',
+      distribution
+    );
+    const archivePkgPath = path.join(archivesPath, name);
+    const archiveVerPath = path.join(archivePkgPath, version);
+
+    const indexJson = path.join(archivesPath, name, 'index.json');
+    const index = xFs.fse.readJSONSync(indexJson);
+    const baseVersion = Wpkg._baseVersion(version);
+
+    const it = index[baseVersion].versions.indexOf(version);
+    if (it === -1) {
+      return;
+    }
+    const isLatest = version === index[baseVersion].latest;
+    index[baseVersion].versions.splice(it, 1);
+    if (isLatest) {
+      const length = index[baseVersion].versions.length;
+      if (length === 0) {
+        this._quest.log.warn(
+          `${name} ${version} cannot be moved because it's the last one`
+        );
+        return;
+      }
+      index[baseVersion].latest = index[baseVersion].versions[length - 1];
+    }
+
+    xFs.mv(archiveVerPath, path.join(destinationDir, version));
+    xFs.fse.writeJSONSync(indexJson, index, {spaces: 2});
+  }
+
   *_syncRepository(repositoryPath) {
     const wpkg = new WpkgBin(this._resp);
     const distributions = xFs.lsdir(repositoryPath);
