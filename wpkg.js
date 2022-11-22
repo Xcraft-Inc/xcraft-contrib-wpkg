@@ -336,6 +336,10 @@ class Wpkg {
     const index = xFs.fse.readJSONSync(indexJson);
     const baseVersion = Wpkg._baseVersion(version);
 
+    if (!index[baseVersion]) {
+      return;
+    }
+
     const it = index[baseVersion].versions.indexOf(version);
     if (it === -1) {
       return;
