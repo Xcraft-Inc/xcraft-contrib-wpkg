@@ -36,13 +36,15 @@ class Wpkg {
 
     watt.wrapAll(
       this,
-      'graph',
-      'listIndexPackages',
       'addSources',
-      'removeSources',
+      'graph',
+      'isPublished',
       'isV1Greater',
-      '_moveToArchiving',
+      'listIndexPackages',
+      'removeSources',
+      'show',
       '_archiving',
+      '_moveToArchiving',
       '_syncRepository'
     );
   }
@@ -681,9 +683,10 @@ class Wpkg {
    * @param {string} arch - Architecture
    * @param {string} [version] - Version
    * @param {string} [distribution] - A specific distribution or null for default.
-   * @param {function(err, results)} callback - Async callback.
+   * @param {function(err, results)} next - Watt's callback.
+   * @returns {*} the Debian package definition.
    */
-  show(packageName, arch, version, distribution, callback) {
+  *show(packageName, arch, version, distribution, next) {
     let repository = null;
 
     if (version) {
@@ -704,7 +707,7 @@ class Wpkg {
       );
     }
 
-    this._lookForPackage(
+    return yield this._lookForPackage(
       packageName,
       version,
       arch,
@@ -712,12 +715,12 @@ class Wpkg {
       repository,
       (err, deb) => {
         if (err) {
-          callback(err);
+          next(err);
           return;
         }
 
         if (version && deb.repository !== repository) {
-          callback(
+          next(
             `package ${packageName} not found in ${distribution} for  the version ${version}`
           );
           return;
@@ -725,7 +728,7 @@ class Wpkg {
 
         if (deb.hash) {
           if (this._cache.has(deb.hash)) {
-            callback(null, this._cache.get(deb.hash));
+            next(null, this._cache.get(deb.hash));
             return;
           }
         }
@@ -735,7 +738,7 @@ class Wpkg {
           if (!err) {
             this._cache.set(deb.hash, def);
           }
-          callback(err, def);
+          next(err, def);
         });
       }
     );
@@ -1046,17 +1049,18 @@ class Wpkg {
    * @param {string} [arch] - Architecture.
    * @param {string} [distribution] - A specific distribution or null for default.
    * @param {string} [repositoryPath] - Path on the repository (or null).
-   * @param {function(err, results)} callback - Async callback.
+   * @param {function(err, results)} next - Watt's callback.
+   * @returns {*} the debian package info.
    */
-  isPublished(
+  *isPublished(
     packageName,
     packageVersion,
     arch,
     distribution,
     repositoryPath,
-    callback
+    next
   ) {
-    this._lookForPackage(
+    return yield this._lookForPackage(
       packageName,
       packageVersion,
       arch,
@@ -1065,11 +1069,11 @@ class Wpkg {
       (err, deb) => {
         if (err) {
           this._resp.log.warn(err);
-          callback(null, false);
+          next(null, false);
           return;
         }
 
-        callback(null, deb);
+        next(null, deb);
       }
     );
   }
