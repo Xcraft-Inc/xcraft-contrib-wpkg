@@ -43,6 +43,7 @@ class Wpkg {
       'isV1Greater',
       'listIndexPackages',
       'removeSources',
+      'setSelection',
       'show',
       '_archiving',
       '_moveToArchiving',
@@ -772,6 +773,20 @@ class Wpkg {
 
     const wpkg = new WpkgBin(this._resp, targetRoot);
     yield wpkg.autoremove(arch);
+  }
+
+  /**
+   *
+   * @param {string} packageName - Package name.
+   * @param {string} arch - Architecture.
+   * @param {string} selection - auto, normal, hold, reject
+   * @param {string} [distribution] - A specific distribution or null for default.
+   */
+  *setSelection(packageName, arch, selection, distribution) {
+    const targetRoot = xPacman.getTargetRoot(distribution, this._resp);
+
+    const wpkg = new WpkgBin(this._resp, targetRoot);
+    yield wpkg.setSelection(packageName, arch, selection);
   }
 
   /**
