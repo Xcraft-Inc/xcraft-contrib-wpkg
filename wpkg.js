@@ -37,6 +37,7 @@ class Wpkg {
     watt.wrapAll(
       this,
       'addSources',
+      'autoremove',
       'graph',
       'isPublished',
       'isV1Greater',
@@ -758,6 +759,19 @@ class Wpkg {
 
     const wpkg = new WpkgBin(this._resp, targetRoot);
     wpkg.remove(packageName, arch, recursive, callback);
+  }
+
+  /**
+   * Autoremove implicit and no longer used packages
+   *
+   * @param {string} arch - Architecture.
+   * @param {string} [distribution] - A specific distribution or null for default.
+   */
+  *autoremove(arch, distribution) {
+    const targetRoot = xPacman.getTargetRoot(distribution, this._resp);
+
+    const wpkg = new WpkgBin(this._resp, targetRoot);
+    yield wpkg.autoremove(arch);
   }
 
   /**
