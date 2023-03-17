@@ -1108,6 +1108,11 @@ class Wpkg {
     );
   }
 
+  targetExists(distribution) {
+    const targetRoot = xPacman.getTargetRoot(distribution, this._resp);
+    return xFs.fse.existsSync(targetRoot);
+  }
+
   /**
    * Synchronize the repository with the archives repositories.
    *
