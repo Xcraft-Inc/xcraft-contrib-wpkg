@@ -724,7 +724,7 @@ class Wpkg {
 
         if (version && deb.repository !== repository) {
           next(
-            `package ${packageName} not found in ${distribution} for  the version ${version}`
+            `package ${packageName} not found in ${distribution} for the version ${version}`
           );
           return;
         }
