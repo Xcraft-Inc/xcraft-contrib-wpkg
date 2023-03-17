@@ -113,7 +113,7 @@ class Wpkg {
     }
 
     const filters = {
-      distrib: new RegExp(`(${distribution}|sources)`),
+      distrib: new RegExp(`(${distribution.replace('+', '\\+')}|sources)`),
       name: packageName,
       version: packageVersion,
       arch: new RegExp('(' + archRoot + '|all)'),
