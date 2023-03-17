@@ -45,6 +45,7 @@ class Wpkg {
       'removeSources',
       'setSelection',
       'show',
+      'syncRepository',
       '_archiving',
       '_moveToArchiving',
       '_syncRepository'
@@ -1104,6 +1105,19 @@ class Wpkg {
 
         next(null, deb);
       }
+    );
+  }
+
+  /**
+   * Synchronize the repository with the archives repositories.
+   *
+   * @param {string} distribution - A specific distribution or null for default.
+   * @param {function(err, results)} next - Watt's callback.
+   */
+  *syncRepository(distribution, next) {
+    yield this._syncRepository(
+      xPacman.getDebRoot(distribution, this._resp),
+      next
     );
   }
 
