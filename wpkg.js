@@ -1074,6 +1074,7 @@ class Wpkg {
   /**
    * Check if a package is already published.
    *
+   * @yields
    * @param {string} packageName - Package name.
    * @param {string} packageVersion - Package version.
    * @param {string} [arch] - Architecture.
@@ -1116,6 +1117,7 @@ class Wpkg {
   /**
    * Synchronize the repository with the archives repositories.
    *
+   * @yields
    * @param {string} distribution - A specific distribution or null for default.
    * @param {function(err, results)} next - Watt's callback.
    */
@@ -1129,6 +1131,7 @@ class Wpkg {
   /**
    * Generate a graph for a list of packages.
    *
+   * @yields
    * @param {string} packageNames - Package name.
    * @param {string} arch - Architecture.
    * @param {string} [distribution] - A specific distribution or null for default.
