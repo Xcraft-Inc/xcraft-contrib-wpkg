@@ -418,7 +418,7 @@ class Wpkg {
    * @param {string} packagePath - Source package location.
    * @param {string} [outputRepository] - null for default.
    * @param {string} [distribution] - A specific distribution or null for default.
-   * @param {function(err, results)} callback - Async callback.
+   * @param {callback} callback - Async callback.
    */
   build(packagePath, outputRepository, distribution, callback) {
     this._build(packagePath, false, outputRepository, distribution, callback);
@@ -430,7 +430,7 @@ class Wpkg {
    * @param {string} packagePath - Source package location.
    * @param {string} [outputRepository] - null for default.
    * @param {string} [distribution] - A specific distribution or null for default.
-   * @param {function(err, results)} callback - Async callback.
+   * @param {callback} callback - Async callback.
    */
   buildSrc(packagePath, outputRepository, distribution, callback) {
     this._build(packagePath, true, outputRepository, distribution, callback);
@@ -443,7 +443,7 @@ class Wpkg {
    * @param {string} arch - Architecture
    * @param {string} [repository] - Source repository (null for default).
    * @param {string} [distribution] - A specific distribution or null for default.
-   * @param {function(err, results)} callback - Async callback.
+   * @param {callback} callback - Async callback.
    */
   buildFromSrc(packageName, arch, repository, distribution, callback) {
     if (!repository) {
@@ -502,7 +502,7 @@ class Wpkg {
    *
    * @param {string} packageName - Package name.
    * @param {string} arch - Architecture.
-   * @param {function(err, results)} callback - Async callback.
+   * @param {callback} callback - Async callback.
    */
   listFiles(packageName, arch, callback) {
     const list = [];
@@ -520,7 +520,7 @@ class Wpkg {
    * @param {string} arch - Architecture.
    * @param {string} [distribution] - A specific distribution or null for default.
    * @param {string} [pattern] - Glob Unix Shell Pattern for filtering.
-   * @param {function(err, results)} callback - Async callback.
+   * @param {callback} callback - Async callback.
    */
   list(arch, distribution, pattern, callback) {
     const list = [];
@@ -539,7 +539,7 @@ class Wpkg {
    * @param {string} arch - Architecture.
    * @param {string} [distribution] - A specific distribution or null for default.
    * @param {string} [pattern] - Glob Unix Shell Pattern for searching.
-   * @param {function(err, results)} callback - Async callback.
+   * @param {callback} callback - Async callback.
    */
   search(arch, distribution, pattern, callback) {
     const list = [];
@@ -557,7 +557,7 @@ class Wpkg {
    *
    * @param {string} arch - Architecture.
    * @param {string} [distribution] - A specific distribution or null for default.
-   * @param {function(err, results)} callback - Async callback.
+   * @param {callback} callback - Async callback.
    */
   unlock(arch, distribution, callback) {
     const targetRoot = xPacman.getTargetRoot(distribution, this._resp);
@@ -575,7 +575,7 @@ class Wpkg {
    * @param {string} [distribution] - A specific distribution or null for default.
    * @param {string} [targetRoot] - For production root (null for devroot).
    * @param {boolean} [reinstall] - Reinstall if already installed.
-   * @param {function(err, results)} callback - Async callback.
+   * @param {callback} callback - Async callback.
    */
   install(packageName, arch, distribution, targetRoot, reinstall, callback) {
     this._lookForPackage(
@@ -612,7 +612,7 @@ class Wpkg {
    * @param {string} [distribution] - A specific distribution or null for default.
    * @param {string} [targetRoot] - For production root (null for devroot).
    * @param {boolean} [reinstall] - Reinstall if already installed.
-   * @param {function(err, results)} callback - Async callback.
+   * @param {callback} callback - Async callback.
    */
   installByName(
     packageName,
@@ -636,7 +636,7 @@ class Wpkg {
    * @param {string} packageName - Package name.
    * @param {string} arch - Architecture
    * @param {string} [distribution] - A specific distribution or null for default.
-   * @param {function(err, results)} callback - Async callback.
+   * @param {callback} callback - Async callback.
    */
   isInstalled(packageName, arch, distribution, callback) {
     const targetRoot = xPacman.getTargetRoot(distribution, this._resp);
@@ -661,7 +661,7 @@ class Wpkg {
    * @param {string} packageName - Package name.
    * @param {string} arch - Architecture
    * @param {string} [distribution] - A specific distribution or null for default.
-   * @param {function(err, results)} callback - Async callback.
+   * @param {callback} callback - Async callback.
    */
   fields(packageName, arch, distribution, callback) {
     const targetRoot = xPacman.getTargetRoot(distribution, this._resp);
@@ -680,7 +680,7 @@ class Wpkg {
    * @param {string} arch - Architecture
    * @param {string} [version] - Version
    * @param {string} [distribution] - A specific distribution or null for default.
-   * @param {function(err, results)} next - Watt's callback.
+   * @param {callback} next - Watt's callback.
    * @returns {*} the Debian package definition.
    */
   *show(packageName, arch, version, distribution, next) {
@@ -746,7 +746,7 @@ class Wpkg {
    * @param {string} arch - Architecture.
    * @param {string} [distribution] - A specific distribution or null for default.
    * @param {boolean} [recursive] - Remove deps recursively.
-   * @param {function(err, results)} callback - Async callback.
+   * @param {callback} callback - Async callback.
    */
   remove(packageName, arch, distribution, recursive, callback) {
     const targetRoot = xPacman.getTargetRoot(distribution, this._resp);
@@ -790,7 +790,7 @@ class Wpkg {
    * @param {string} arch - Architecture.
    * @param {string} [distribution] - A specific distribution or null for default.
    * @param {string} [targetRoot] -  For production root (null for devroot).
-   * @param {function(err, results)} callback - Async callback.
+   * @param {callback} callback - Async callback.
    */
   createAdmindir(arch, distribution, targetRoot, callback) {
     const xFs = require('xcraft-core-fs');
@@ -826,7 +826,7 @@ class Wpkg {
    * @param {string[]} hooks - List of scripts paths.
    * @param {string} arch - Architecture.
    * @param {string} [distribution] - A specific distribution or null for default.
-   * @param {function(err, results)} callback - Async callback.
+   * @param {callback} callback - Async callback.
    */
   addHooks(hooks, arch, distribution, callback) {
     const targetRoot = xPacman.getTargetRoot(distribution, this._resp);
@@ -845,7 +845,7 @@ class Wpkg {
    * @param {string} sourcePath - The new APT source entry to add.
    * @param {string} arch - Architecture.
    * @param {string} [targetRoot] - For production root (null for devroot).
-   * @param {function(err, results)} next - watt.
+   * @param {callback} next - watt.
    */
   *addSources(sourcePath, arch, targetRoot, next) {
     if (!targetRoot) {
@@ -891,7 +891,7 @@ class Wpkg {
    * @param {string} sourcePath - The new APT source entry to add.
    * @param {string} arch - Architecture.
    * @param {string} [targetRoot] -  For production root (null for devroot).
-   * @param {function(err, results)} next - watt.
+   * @param {callback} next - watt.
    */
   *removeSources(sourcePath, arch, targetRoot, next) {
     if (!targetRoot) {
@@ -934,7 +934,7 @@ class Wpkg {
    *
    * @param {string} arch - Architecture.
    * @param {string} [targetRoot] -  For production root (null for devroot).
-   * @param {function(err, results)} callback - Async callback.
+   * @param {callback} callback - Async callback.
    */
   update(arch, targetRoot, callback) {
     const wpkg = new WpkgBin(this._resp, targetRoot);
@@ -946,7 +946,7 @@ class Wpkg {
    *
    * @param {string} arch - Architecture.
    * @param {string} [targetRoot] -  For production root (null for devroot).
-   * @param {function(err, results)} callback - Async callback.
+   * @param {callback} callback - Async callback.
    */
   upgrade(arch, targetRoot, callback) {
     const wpkg = new WpkgBin(this._resp, targetRoot);
@@ -961,7 +961,7 @@ class Wpkg {
    * @param {string} inputRepository - Source repository.
    * @param {string} outputRepository - Destination repository.
    * @param {string} distribution - Distribution name.
-   * @param {function(err, results)} callback - Async callback.
+   * @param {callback} callback - Async callback.
    */
   publish(
     packageName,
@@ -1017,7 +1017,7 @@ class Wpkg {
    * @param {string} repository - Source repository.
    * @param {string} distribution - Distribution name.
    * @param {boolean} updateIndex - True to call createIndex (slow).
-   * @param {function(err, results)} callback - Async callback.
+   * @param {callback} callback - Async callback.
    */
   unpublish(
     packageName,
@@ -1075,7 +1075,7 @@ class Wpkg {
    * @param {string} [arch] - Architecture.
    * @param {string} [distribution] - A specific distribution or null for default.
    * @param {string} [repositoryPath] - Path on the repository (or null).
-   * @param {function(err, results)} next - Watt's callback.
+   * @param {callback} next - Watt's callback.
    * @returns {*} the debian package info.
    */
   *isPublished(
@@ -1114,7 +1114,7 @@ class Wpkg {
    *
    * @yields
    * @param {string} distribution - A specific distribution or null for default.
-   * @param {function(err, results)} next - Watt's callback.
+   * @param {callback} next - Watt's callback.
    */
   *syncRepository(distribution, next) {
     yield this._syncRepository(
