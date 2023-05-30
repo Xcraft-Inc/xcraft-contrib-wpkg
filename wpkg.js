@@ -59,6 +59,7 @@ class Wpkg {
   /**
    * Retrieve a list of packages available in a repository accordingly to filters.
    *
+   * @yields
    * @param {string[]} repositoryPaths - Source repositories.
    * @param {string} arch - Architecture.
    * @param {Object} filters - Strings or regexps (in an object).
@@ -674,6 +675,7 @@ class Wpkg {
    *
    * If the result is null, then the package is not available.
    *
+   * @yields
    * @param {string} packageName - Package name.
    * @param {string} arch - Architecture
    * @param {string} [version] - Version
@@ -756,6 +758,7 @@ class Wpkg {
   /**
    * Autoremove implicit and no longer used packages
    *
+   * @yields
    * @param {string} arch - Architecture.
    * @param {string} [distribution] - A specific distribution or null for default.
    */
@@ -767,7 +770,7 @@ class Wpkg {
   }
 
   /**
-   *
+   * @yields
    * @param {string} packageName - Package name.
    * @param {string} arch - Architecture.
    * @param {string} selection - auto, normal, hold, reject
@@ -838,6 +841,7 @@ class Wpkg {
    * A source is needed in order to upgrade the packages in the target root
    * accordingly to the versions in the repository referenced in the source.
    *
+   * @yields
    * @param {string} sourcePath - The new APT source entry to add.
    * @param {string} arch - Architecture.
    * @param {string} [targetRoot] - For production root (null for devroot).
@@ -883,6 +887,7 @@ class Wpkg {
   /**
    * Remove a source from the target installation.
    *
+   * @yields
    * @param {string} sourcePath - The new APT source entry to add.
    * @param {string} arch - Architecture.
    * @param {string} [targetRoot] -  For production root (null for devroot).
