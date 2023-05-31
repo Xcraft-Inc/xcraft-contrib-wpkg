@@ -52,7 +52,7 @@ class Wpkg {
     );
   }
 
-  static _archivesPath(repositoryPath, distribution) {
+  getArchivesPath(repositoryPath, distribution) {
     return path.join(path.dirname(repositoryPath), 'wpkg@ver', distribution);
   }
 
@@ -235,7 +235,7 @@ class Wpkg {
 
   *_archiving(wpkg, repositoryPath, distributions) {
     for (const distribution of distributions) {
-      const archivesPath = Wpkg._archivesPath(repositoryPath, distribution);
+      const archivesPath = this.getArchivesPath(repositoryPath, distribution);
       const packagesPath = path.join(repositoryPath, distribution);
       const list = xFs
         .ls(packagesPath, /\.deb$/)
@@ -306,7 +306,7 @@ class Wpkg {
 
   listArchiveVersions(packageName, distribution) {
     const repositoryPath = xPacman.getDebRoot(distribution, this._resp);
-    const archivesPath = Wpkg._archivesPath(repositoryPath, distribution);
+    const archivesPath = this.getArchivesPath(repositoryPath, distribution);
     const indexJson = path.join(archivesPath, packageName, 'index.json');
 
     try {
@@ -326,7 +326,7 @@ class Wpkg {
 
   moveArchive(name, version, distribution, destinationDir) {
     const repositoryPath = xPacman.getDebRoot(distribution, this._resp);
-    const archivesPath = Wpkg._archivesPath(repositoryPath, distribution);
+    const archivesPath = this.getArchivesPath(repositoryPath, distribution);
     const archivePkgPath = path.join(archivesPath, name);
     const archiveVerPath = path.join(archivePkgPath, version);
 
@@ -696,7 +696,7 @@ class Wpkg {
       distribution = distribution.replace(/\/$/, '');
 
       repository = path.join(
-        Wpkg._archivesPath(xConfig.pkgDebRoot, distribution),
+        this.getArchivesPath(xConfig.pkgDebRoot, distribution),
         packageName,
         version
       );
