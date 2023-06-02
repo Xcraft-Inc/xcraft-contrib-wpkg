@@ -386,8 +386,8 @@ class Wpkg {
   *_syncRepository(repositoryPath) {
     const wpkg = new WpkgBin(this._resp);
     const distributions = xFs.lsdir(repositoryPath);
+    yield wpkg.createIndex(repositoryPath, this._pacmanConfig.pkgIndex);
     yield this._archiving(wpkg, repositoryPath, distributions);
-    return yield wpkg.createIndex(repositoryPath, this._pacmanConfig.pkgIndex);
   }
 
   _build(packagePath, isSource, outputRepository, distribution, callback) {
