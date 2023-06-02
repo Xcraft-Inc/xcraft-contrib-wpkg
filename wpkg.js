@@ -62,10 +62,11 @@ class Wpkg {
    * @yields
    * @param {string[]} repositoryPaths - Source repositories.
    * @param {string} arch - Architecture.
-   * @param {Object} filters - Strings or regexps (in an object).
-   * @returns {Object} list of packages.
+   * @param {object} filters - Strings or regexps (in an object).
+   * @param {object} options - Provide greater: true if you want only the >
+   * @returns {object} list of packages.
    */
-  *listIndexPackages(repositoryPaths, arch, filters) {
+  *listIndexPackages(repositoryPaths, arch, filters, options) {
     const list = {};
 
     for (const repositoryPath of repositoryPaths) {
@@ -75,7 +76,13 @@ class Wpkg {
 
       const _list = {};
       const wpkg = new WpkgBin(this._resp);
-      yield wpkg.listIndexPackages(repositoryPath, arch, filters, _list);
+      yield wpkg.listIndexPackages(
+        repositoryPath,
+        arch,
+        filters,
+        _list,
+        options
+      );
       list[repositoryPath] = _list;
     }
 
@@ -129,7 +136,8 @@ class Wpkg {
      * with the new way. Then we must look in the repository index file if
      * the package exists and in order to retrieve the full package name.
      */
-    this.listIndexPackages(repositories, archRoot, filters, (err, list) => {
+    const op = {greater: true};
+    this.listIndexPackages(repositories, archRoot, filters, op, (err, list) => {
       if (err) {
         callback(err);
         return;
