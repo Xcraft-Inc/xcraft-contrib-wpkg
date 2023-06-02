@@ -26,13 +26,14 @@ class MapLimit extends Map {
 }
 
 class Wpkg {
+  static #cache = new MapLimit(100);
+
   constructor(resp) {
     this._resp = resp;
 
     const xEtc = require('xcraft-core-etc')(null, this._resp);
     this._xcraftConfig = xEtc.load('xcraft');
     this._pacmanConfig = xEtc.load('xcraft-contrib-pacman');
-    this._cache = new MapLimit(100);
 
     watt.wrapAll(
       this,
@@ -730,8 +731,8 @@ class Wpkg {
         }
 
         if (deb.hash) {
-          if (this._cache.has(deb.hash)) {
-            next(null, this._cache.get(deb.hash));
+          if (Wpkg.#cache.has(deb.hash)) {
+            next(null, Wpkg.#cache.get(deb.hash));
             return;
           }
         }
@@ -739,7 +740,7 @@ class Wpkg {
         const wpkg = new WpkgBin(this._resp, null);
         wpkg.show(deb.file, deb.distribution, (err, def) => {
           if (!err) {
-            this._cache.set(deb.hash, def);
+            Wpkg.#cache.set(deb.hash, def);
           }
           next(err, def);
         });
