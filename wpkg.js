@@ -374,6 +374,25 @@ class Wpkg {
     }
   }
 
+  getArchiveLatestVersion(packageName, distribution) {
+    const repositoryPath = xPacman.getDebRoot(distribution, this._resp);
+    const archiveDistrib =
+      packageName.endsWith('-src') && distribution.indexOf('+') === -1
+        ? 'sources/'
+        : distribution;
+    const archivesPath = this.getArchivesPath(repositoryPath, archiveDistrib);
+    const indexJson = path.join(archivesPath, packageName, 'index.json');
+
+    try {
+      const index = xFs.fse.readJSONSync(indexJson);
+      return index?.[index?.latest]?.latest;
+    } catch (ex) {
+      if (ex.code !== 'ENOENT') {
+        throw ex;
+      }
+    }
+  }
+
   listArchiveVersions(packageName, distribution) {
     const repositoryPath = xPacman.getDebRoot(distribution, this._resp);
     const archivesPath = this.getArchivesPath(repositoryPath, distribution);
