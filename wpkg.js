@@ -279,7 +279,16 @@ class Wpkg {
     xFs.fse.writeJSONSync(indexJson, _list, {spaces: 2});
   }
 
-  *_archiving(wpkg, repositoryPath, distributions) {
+  *_archiving(wpkg, repositoryPath, distributions, next) {
+    const archRoot = getToolchainArch();
+    const indexList = yield this.listIndexPackages(
+      [repositoryPath],
+      archRoot,
+      null,
+      null,
+      next
+    );
+
     for (const distribution of distributions) {
       const archivesPath = this.getArchivesPath(repositoryPath, distribution);
       const packagesPath = path.join(repositoryPath, distribution);
@@ -307,6 +316,21 @@ class Wpkg {
         }, {});
 
       for (const name of Object.keys(list)) {
+        /* Extract the specific distribution if necessary */
+        const getFinalArchivesPath = (deb) => {
+          let specificDistrib;
+          if (indexList[repositoryPath]?.[name]?.[deb.version]) {
+            specificDistrib = indexList[repositoryPath][name][
+              deb.version
+            ].ctrl.Distribution.split(' ').find(
+              (distrib) => distrib.indexOf('+') !== -1
+            );
+          }
+          return specificDistrib
+            ? this.getArchivesPath(repositoryPath, specificDistrib)
+            : archivesPath;
+        };
+
         const debs = list[name];
 
         if (debs.length > 1) {
@@ -325,7 +349,7 @@ class Wpkg {
             yield this._moveToArchiving(
               wpkg,
               packagesPath,
-              archivesPath,
+              getFinalArchivesPath(toAr),
               toAr,
               false
             );
@@ -342,7 +366,7 @@ class Wpkg {
         yield this._moveToArchiving(
           wpkg,
           packagesPath,
-          archivesPath,
+          getFinalArchivesPath(latest),
           latest,
           true
         );
