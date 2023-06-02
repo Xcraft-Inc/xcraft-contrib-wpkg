@@ -39,6 +39,7 @@ class Wpkg {
       this,
       'addSources',
       'autoremove',
+      'copyFromArchiving',
       'graph',
       'isPublished',
       'isV1Greater',
@@ -175,6 +176,42 @@ class Wpkg {
 
   static _baseVersion(v) {
     return v.replace(/-[^-]*/, '');
+  }
+
+  *copyFromArchiving(packageName, arch, version, distribution) {
+    const isSrc = packageName.endsWith('-src');
+    const architecture = isSrc ? '' : arch;
+    const outDistrib = isSrc ? 'sources/' : distribution;
+    const archiveDistrib =
+      packageName.endsWith('-src') && distribution.indexOf('+') === -1
+        ? 'sources/'
+        : distribution;
+    let file = `${packageName}_${version}`;
+    if (architecture) {
+      file += `_${architecture}`;
+    }
+    file += '.deb';
+
+    const archiveRepository = path.join(
+      this.getArchivesPath(this._xcraftConfig.pkgDebRoot, archiveDistrib),
+      packageName,
+      version
+    );
+    const archivePackage = path.join(archiveRepository, file);
+    const outputRepository = xPacman.getDebRoot(outDistrib, this._resp);
+    const outputPackage = path.join(outputRepository, outDistrib, file);
+
+    xFs.cp(archivePackage, outputPackage);
+    try {
+      xFs.cp(archivePackage + '.md5sum', outputPackage + '.md5sum');
+    } catch (ex) {
+      if (ex.code !== 'ENOENT') {
+        throw ex;
+      }
+    }
+
+    const wpkg = new WpkgBin(this._resp);
+    yield wpkg.createIndex(outputRepository, this._pacmanConfig.pkgIndex);
   }
 
   *_moveToArchiving(wpkg, packagesPath, archivesPath, deb, backLink = false) {
