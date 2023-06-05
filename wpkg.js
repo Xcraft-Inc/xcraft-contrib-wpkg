@@ -85,7 +85,7 @@ class Wpkg {
    * @param {string} [archRoot] - Architecture for the admin dir.
    * @param {string} [distribution] - A specific distribution or null for default.
    * @param {string} [repositoryPath] - Path on the repository (null for default).
-   * @param {function(err, deb)} callback - Async callback.
+   * @param {callback} callback - Async callback.
    */
   _lookForPackage(
     packageName,
