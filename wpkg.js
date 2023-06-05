@@ -26,7 +26,7 @@ class MapLimit extends Map {
 }
 
 class Wpkg {
-  static #cache = new MapLimit(100);
+  static #showCache = new MapLimit(100);
 
   constructor(resp) {
     this._resp = resp;
@@ -811,8 +811,8 @@ class Wpkg {
         }
 
         if (deb.hash) {
-          if (Wpkg.#cache.has(deb.hash)) {
-            next(null, Wpkg.#cache.get(deb.hash));
+          if (Wpkg.#showCache.has(deb.hash)) {
+            next(null, Wpkg.#showCache.get(deb.hash));
             return;
           }
         }
@@ -820,7 +820,7 @@ class Wpkg {
         const wpkg = new WpkgBin(this._resp, null);
         wpkg.show(deb.file, deb.distribution, (err, def) => {
           if (!err) {
-            Wpkg.#cache.set(deb.hash, def);
+            Wpkg.#showCache.set(deb.hash, def);
           }
           next(err, def);
         });
