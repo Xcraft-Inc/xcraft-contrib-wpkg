@@ -8,22 +8,8 @@ const xFs = require('xcraft-core-fs');
 const xPacman = require('xcraft-contrib-pacman');
 
 const WpkgBin = require('./lib/bin.js');
+const MapLimit = require('./lib/mapLimit.js');
 const {getToolchainArch} = require('xcraft-core-platform');
-
-class MapLimit extends Map {
-  constructor(max) {
-    super();
-    this._max = max;
-  }
-
-  set(key, value) {
-    while (this.size >= this._max) {
-      const it = this.entries();
-      this.delete(it.next().value[0]);
-    }
-    super.set(key, value);
-  }
-}
 
 class Wpkg {
   static #showCache = new MapLimit(100);
