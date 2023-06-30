@@ -790,9 +790,10 @@ class Wpkg {
         }
 
         if (version && deb.repository !== repository) {
-          next(
+          this._resp.log.warn(
             `package ${packageName} not found in ${distribution} for the version ${version}`
           );
+          next('package not found');
           return;
         }
 
