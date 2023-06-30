@@ -451,9 +451,15 @@ class Wpkg {
 
   *_syncRepository(repositoryPath) {
     const wpkg = new WpkgBin(this._resp);
-    const distributions = xFs.lsdir(repositoryPath);
-    yield wpkg.createIndex(repositoryPath, this._pacmanConfig.pkgIndex);
-    yield this._archiving(wpkg, repositoryPath, distributions);
+    try {
+      const distributions = xFs.lsdir(repositoryPath);
+      yield wpkg.createIndex(repositoryPath, this._pacmanConfig.pkgIndex);
+      yield this._archiving(wpkg, repositoryPath, distributions);
+    } catch (ex) {
+      if (ex.code !== 'ENOENT') {
+        throw ex;
+      }
+    }
   }
 
   _build(packagePath, isSource, outputRepository, distribution, callback) {
