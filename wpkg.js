@@ -218,10 +218,26 @@ class Wpkg {
     const dst = path.join(archiveVerPath, deb.file);
 
     if (fs.existsSync(dst)) {
-      if (!backLink) {
-        tryfs('rm', src);
+      let md5sumSrc;
+      let md5sumDst;
+
+      if (fs.existsSync(src + '.md5sum')) {
+        md5sumSrc = xFs.fse.readFileSync(src + '.md5sum', 'utf8');
       }
-      return;
+      if (fs.existsSync(dst + '.md5sum')) {
+        md5sumDst = xFs.fse.readFileSync(dst + '.md5sum', 'utf8');
+      }
+
+      if (md5sumSrc === md5sumDst) {
+        if (!backLink) {
+          tryfs('rm', src);
+        }
+        return;
+      }
+
+      this._resp.log.warn(
+        `replace ${dst} by a new wpkg build with the same version`
+      );
     }
 
     tryfs(backLink ? 'cp' : 'mv', src, dst);
