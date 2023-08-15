@@ -986,7 +986,7 @@ class Wpkg {
    * Remove a source from the target installation.
    *
    * @yields
-   * @param {string} sourcePath - The new APT source entry to add.
+   * @param {string} sourcePath - The APT source entry to remove.
    * @param {string} arch - Architecture.
    * @param {string} [targetRoot] -  For production root (null for devroot).
    * @param {callback} next - watt.
