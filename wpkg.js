@@ -196,8 +196,7 @@ class Wpkg {
       }
     }
 
-    const wpkg = new WpkgBin(this._resp);
-    yield wpkg.createIndex(outputRepository, this._pacmanConfig.pkgIndex);
+    yield this._syncRepository(outputRepository);
   }
 
   *_moveToArchiving(wpkg, packagesPath, archivesPath, deb, backLink = false) {
