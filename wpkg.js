@@ -468,8 +468,11 @@ class Wpkg {
     const wpkg = new WpkgBin(this._resp);
     try {
       const distributions = xFs.lsdir(repositoryPath);
+      /* Detect potential new packages */
       yield wpkg.createIndex(repositoryPath, this._pacmanConfig.pkgIndex);
       yield this._archiving(wpkg, repositoryPath, distributions);
+      /* Update after the archiving of some packages */
+      yield wpkg.createIndex(repositoryPath, this._pacmanConfig.pkgIndex);
     } catch (ex) {
       if (ex.code !== 'ENOENT') {
         throw ex;
