@@ -11,6 +11,30 @@ const WpkgBin = require('./lib/bin.js');
 const MapLimit = require('./lib/mapLimit.js');
 const {getToolchainArch} = require('xcraft-core-platform');
 
+/**
+ * Extract the max version by using wpkg.
+ *
+ * @yields
+ * @param {*} wpkg wpkg wrapper
+ * @param {Array} versions List of versions where extract the max
+ * @returns {string} the max version
+ */
+function* maxVersion(wpkg, versions) {
+  let maxVersion = versions[0];
+
+  if (versions.length === 1) {
+    return maxVersion;
+  }
+
+  for (const version of versions) {
+    const isV1Greater = yield wpkg.isV1Greater(version, maxVersion);
+    if (isV1Greater) {
+      maxVersion = version;
+    }
+  }
+
+  return maxVersion;
+}
 class Wpkg {
   static #showCache = new MapLimit(100);
 
@@ -275,8 +299,17 @@ class Wpkg {
       list[base].versions.push(version);
       return list;
     }, _list);
-    _list[Wpkg._baseVersion(deb.version)].latest = deb.version;
-    _list.latest = Wpkg._baseVersion(deb.version);
+
+    const baseVersion = Wpkg._baseVersion(deb.version);
+    _list[baseVersion].latest = yield* maxVersion(
+      wpkg,
+      _list[baseVersion].versions
+    );
+    _list.latest = yield* maxVersion(
+      wpkg,
+      Object.keys(_list).filter((key) => key !== 'latest')
+    );
+
     xFs.fse.writeJSONSync(indexJson, _list, {spaces: 2});
   }
 
