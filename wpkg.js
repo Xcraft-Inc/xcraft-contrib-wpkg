@@ -20,9 +20,9 @@ const {getToolchainArch} = require('xcraft-core-platform');
  * @returns {string} the max version
  */
 function* maxVersion(wpkg, versions) {
-  let maxVersion = versions[0];
+  let maxVersion = versions.shift();
 
-  if (versions.length === 1) {
+  if (!versions.length) {
     return maxVersion;
   }
 
