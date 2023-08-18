@@ -447,7 +447,7 @@ class Wpkg {
     }
   }
 
-  moveArchive(name, version, distribution, destinationDir) {
+  *moveArchive(name, version, distribution, destinationDir) {
     const repositoryPath = xPacman.getDebRoot(distribution, this._resp);
     const archivesPath = this.getArchivesPath(repositoryPath, distribution);
     const archivePkgPath = path.join(archivesPath, name);
@@ -483,7 +483,11 @@ class Wpkg {
       if (length === 0) {
         delete index[baseVersion];
       } else {
-        index[baseVersion].latest = index[baseVersion].versions[length - 1];
+        const wpkg = new WpkgBin(this._resp);
+        index[baseVersion].latest = yield* maxVersion(
+          wpkg,
+          index[baseVersion].versions
+        );
       }
     }
 
