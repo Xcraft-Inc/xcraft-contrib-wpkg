@@ -941,6 +941,10 @@ class Wpkg {
       distribution = this._pacmanConfig.pkgToolchainRepository;
     }
 
+    if (!distribution.endsWith('/')) {
+      distribution += '/';
+    }
+
     const ph = new xPh.Placeholder();
     ph.set('ARCHITECTURE', arch)
       .set('MAINTAINER.NAME', 'Xcraft')
