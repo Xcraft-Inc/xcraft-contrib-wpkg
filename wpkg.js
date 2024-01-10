@@ -608,10 +608,16 @@ class Wpkg {
 
     /* Without packageName we consider the build of all source packages. */
     if (!packageName) {
-      if (!fs.existsSync(path.join(repository, 'sources'))) {
+      const srcRepository = path.join(repository, 'sources');
+
+      if (!fs.existsSync(srcRepository)) {
         callback('nothing to build');
         return;
       }
+
+      this._resp.log.verb(`Build fo source packages ${srcRepository}`);
+      const files = fs.readdirSync(srcRepository);
+      files.forEach((file) => this._resp.log.verb(`→ ${file}`));
 
       wpkg.build(null, repository, arch, distribution, wpkgCallback);
       return;
