@@ -615,9 +615,11 @@ class Wpkg {
         return;
       }
 
-      this._resp.log.verb(`Build fo source packages ${srcRepository}`);
+      this._resp.log.verb(`Repository ${srcRepository}:`);
       const files = fs.readdirSync(srcRepository);
-      files.forEach((file) => this._resp.log.verb(`→ ${file}`));
+      files
+        .filter((file) => file.endsWith('.deb'))
+        .forEach((file) => this._resp.log.verb(`→ ${file}`));
 
       wpkg.build(null, repository, arch, distribution, wpkgCallback);
       return;
