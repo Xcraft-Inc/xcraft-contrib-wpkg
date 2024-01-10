@@ -54,6 +54,7 @@ class Wpkg {
       'isPublished',
       'isV1Greater',
       'listIndexPackages',
+      'moveArchive',
       'removeSources',
       'setSelection',
       'show',
