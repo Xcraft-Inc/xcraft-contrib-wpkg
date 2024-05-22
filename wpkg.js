@@ -52,6 +52,7 @@ class Wpkg {
       'copyFromArchiving',
       'getDebLocation',
       'graph',
+      'installFromArchive',
       'isPublished',
       'isV1Greater',
       'listIndexPackages',
@@ -774,6 +775,42 @@ class Wpkg {
 
     const wpkg = new WpkgBin(this._resp, targetRoot);
     wpkg.install(packageName, arch, distribution, reinstall, callback);
+  }
+
+  /**
+   * Install a package from the archive directories.
+   *
+   * @yields
+   * @param {string} packageName - Package file location.
+   * @param {string} arch - Architecture.
+   * @param {string} distribution - A specific distribution or null for default.
+   * @param {string} version - Version.
+   * @param {string} targetRoot - For production root (null for devroot).
+   * @param {boolean} reinstall - Reinstall if already installed.
+   * @param {next} next - Watt's callback.
+   */
+  *installFromArchive(
+    packageName,
+    arch,
+    distribution,
+    version,
+    targetRoot,
+    reinstall,
+    next
+  ) {
+    if (!targetRoot) {
+      targetRoot = xPacman.getTargetRoot(distribution, this._resp);
+    }
+
+    const deb = yield this.getDebLocation(
+      packageName,
+      arch,
+      version,
+      distribution
+    );
+
+    const wpkg = new WpkgBin(this._resp, targetRoot);
+    wpkg.install(deb.file, arch, deb.distribution, reinstall, next);
   }
 
   /**
