@@ -838,10 +838,14 @@ class Wpkg {
       if (!distribution) {
         distribution = this._pacmanConfig.pkgToolchainRepository;
       }
-      distribution = distribution.replace(/\/$/, '');
+
+      const archiveDistrib =
+        packageName.endsWith('-src') && distribution.indexOf('+') === -1
+          ? 'sources/'
+          : distribution;
 
       repository = path.join(
-        this.getArchivesPath(xConfig.pkgDebRoot, distribution),
+        this.getArchivesPath(xConfig.pkgDebRoot, archiveDistrib),
         packageName,
         version
       );
