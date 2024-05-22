@@ -889,29 +889,22 @@ class Wpkg {
       );
     }
 
-    return yield this._lookForPackage(
+    const deb = yield this._lookForPackage(
       packageName,
       version,
       arch,
       distribution,
       repository,
-      (err, deb) => {
-        if (err) {
-          next(err);
-          return;
-        }
-
-        if (version && deb.repository !== repository) {
-          this._resp.log.warn(
-            `package ${packageName} not found in ${distribution} for the version ${version}`
-          );
-          next('package not found');
-          return;
-        }
-
-        next(err, deb);
-      }
+      next
     );
+
+    if (version && deb.repository !== repository) {
+      this._resp.log.warn(
+        `package ${packageName} not found in ${distribution} for the version ${version}`
+      );
+      throw 'package not found';
+    }
+    return deb;
   }
 
   /**
@@ -928,33 +921,23 @@ class Wpkg {
    * @returns {*} the Debian package definition.
    */
   *show(packageName, arch, version, distribution, next) {
-    yield this.getDebLocation(
+    const deb = yield this.getDebLocation(
       packageName,
       arch,
       version,
-      distribution,
-      (err, deb) => {
-        if (err) {
-          next(err);
-          return;
-        }
-
-        if (deb.hash) {
-          if (Wpkg.#showCache.has(deb.hash)) {
-            next(null, Wpkg.#showCache.get(deb.hash));
-            return;
-          }
-        }
-
-        const wpkg = new WpkgBin(this._resp, null);
-        wpkg.show(deb.file, deb.distribution, (err, def) => {
-          if (!err) {
-            Wpkg.#showCache.set(deb.hash, def);
-          }
-          next(err, def);
-        });
-      }
+      distribution
     );
+
+    if (deb.hash) {
+      if (Wpkg.#showCache.has(deb.hash)) {
+        return Wpkg.#showCache.get(deb.hash);
+      }
+    }
+
+    const wpkg = new WpkgBin(this._resp, null);
+    const def = wpkg.show(deb.file, deb.distribution);
+    Wpkg.#showCache.set(deb.hash, def);
+    return def;
   }
 
   /**
