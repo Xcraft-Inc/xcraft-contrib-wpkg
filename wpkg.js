@@ -50,6 +50,7 @@ class Wpkg {
       'addSources',
       'autoremove',
       'copyFromArchiving',
+      'getDebLocation',
       'graph',
       'isPublished',
       'isV1Greater',
@@ -816,7 +817,7 @@ class Wpkg {
   }
 
   /**
-   * Get fields of a package as a deep JSON.
+   * Get package deb location.
    *
    * If the result is null, then the package is not available.
    *
@@ -826,9 +827,9 @@ class Wpkg {
    * @param {string} [version] - Version
    * @param {string} [distribution] - A specific distribution or null for default.
    * @param {callback} next - Watt's callback.
-   * @returns {*} the Debian package definition.
+   * @returns {*} the package location.
    */
-  *show(packageName, arch, version, distribution, next) {
+  *getDebLocation(packageName, arch, version, distribution, next) {
     let repository = null;
 
     if (version) {
@@ -868,6 +869,36 @@ class Wpkg {
             `package ${packageName} not found in ${distribution} for the version ${version}`
           );
           next('package not found');
+          return;
+        }
+
+        next(err, deb);
+      }
+    );
+  }
+
+  /**
+   * Get fields of a package as a deep JSON.
+   *
+   * If the result is null, then the package is not available.
+   *
+   * @yields
+   * @param {string} packageName - Package name.
+   * @param {string} arch - Architecture
+   * @param {string} [version] - Version
+   * @param {string} [distribution] - A specific distribution or null for default.
+   * @param {callback} next - Watt's callback.
+   * @returns {*} the Debian package definition.
+   */
+  *show(packageName, arch, version, distribution, next) {
+    yield this.getDebLocation(
+      packageName,
+      arch,
+      version,
+      distribution,
+      (err, deb) => {
+        if (err) {
+          next(err);
           return;
         }
 
