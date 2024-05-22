@@ -917,10 +917,9 @@ class Wpkg {
    * @param {string} arch - Architecture
    * @param {string} [version] - Version
    * @param {string} [distribution] - A specific distribution or null for default.
-   * @param {callback} next - Watt's callback.
    * @returns {*} the Debian package definition.
    */
-  *show(packageName, arch, version, distribution, next) {
+  *show(packageName, arch, version, distribution) {
     const deb = yield this.getDebLocation(
       packageName,
       arch,
@@ -935,7 +934,7 @@ class Wpkg {
     }
 
     const wpkg = new WpkgBin(this._resp, null);
-    const def = wpkg.show(deb.file, deb.distribution);
+    const def = yield wpkg.show(deb.file, deb.distribution);
     Wpkg.#showCache.set(deb.hash, def);
     return def;
   }
