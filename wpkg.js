@@ -10,16 +10,16 @@ const xPacman = require('xcraft-contrib-pacman');
 const WpkgBin = require('./lib/bin.js');
 const MapLimit = require('./lib/mapLimit.js');
 const {getToolchainArch} = require('xcraft-core-platform');
+const debversion = require('wpkg-debversion');
 
 /**
  * Extract the max version by using wpkg.
  *
  * @yields
- * @param {*} wpkg wpkg wrapper
  * @param {Array} versions List of versions where extract the max
  * @returns {string} the max version
  */
-function* maxVersion(wpkg, versions) {
+function* maxVersion(versions) {
   let maxVersion = versions.shift();
 
   if (!versions.length) {
@@ -27,8 +27,8 @@ function* maxVersion(wpkg, versions) {
   }
 
   for (const version of versions) {
-    const isV1Greater = yield wpkg.isV1Greater(version, maxVersion);
-    if (isV1Greater) {
+    const comp = yield debversion(version, maxVersion);
+    if (comp > 0) {
       maxVersion = version;
     }
   }
@@ -304,12 +304,8 @@ class Wpkg {
     }, _list);
 
     const baseVersion = Wpkg._baseVersion(deb.version);
-    _list[baseVersion].latest = yield* maxVersion(
-      wpkg,
-      _list[baseVersion].versions
-    );
+    _list[baseVersion].latest = yield* maxVersion(_list[baseVersion].versions);
     _list.latest = yield* maxVersion(
-      wpkg,
       Object.keys(_list).filter((key) => key !== 'latest')
     );
 
@@ -375,7 +371,8 @@ class Wpkg {
           for (let i = 1; i < debs.length; ++i) {
             let toAr;
 
-            if (yield wpkg.isV1Greater(debs[i].version, toCheck.version)) {
+            const comp = yield debversion(debs[i].version, toCheck.version);
+            if (comp > 0) {
               toAr = toCheck;
               toCheck = debs[i];
             } else {
@@ -488,7 +485,6 @@ class Wpkg {
       } else {
         const wpkg = new WpkgBin(this._resp);
         index[baseVersion].latest = yield* maxVersion(
-          wpkg,
           index[baseVersion].versions
         );
       }
