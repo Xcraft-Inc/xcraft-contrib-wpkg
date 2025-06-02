@@ -806,7 +806,7 @@ class Wpkg {
     );
 
     const wpkg = new WpkgBin(this._resp, targetRoot);
-    wpkg.install(deb.file, arch, deb.distribution, reinstall, next);
+    yield wpkg.install(deb.file, arch, deb.distribution, reinstall, next);
   }
 
   /**
