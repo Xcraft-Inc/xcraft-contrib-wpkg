@@ -1,6 +1,6 @@
 {
   "name": "xcraft-contrib-wpkg",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Xcraft wpkg wrapper",
   "main": "wpkg.js",
   "scripts": {
