@@ -17,7 +17,7 @@
   "dependencies": {
     "gigawatts": "^4.0.5",
     "which": "^2.0.2",
-    "wpkg-debversion": "^1.1.1",
+    "wpkg-debversion": "^1.1.2",
     "xcraft-contrib-pacman": "^1.0.0",
     "xcraft-core-etc": "^3.0.0",
     "xcraft-core-fs": "^2.0.0",
