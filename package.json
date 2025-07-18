@@ -27,7 +27,12 @@
     "xcraft-core-subst": "^1.0.0",
     "xcraft-core-utils": "^4.0.0"
   },
-  "author": "Mathieu Schroeter",
+  "author": "Epsitec SA",
+  "contributors": [
+    "Mathieu Schroeter <schroeter@epsitec.ch>",
+    "Riger Vuistiner <vuistiner@epsitec.ch>",
+    "Gillian Fries <fries@epsitec.ch>"
+  ],
   "license": "MIT",
   "devDependencies": {
     "prettier": "2.0.4",
