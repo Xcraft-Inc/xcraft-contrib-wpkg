@@ -109,7 +109,7 @@ class Wpkg {
    *
    * @param {string} packageName - Package name.
    * @param {string} packageVersion - Package version.
-   * @param {string} [archRoot] - Architecture for the admin dir.
+   * @param {string} [arch] - Architecture.
    * @param {string} [distribution] - A specific distribution or null for default.
    * @param {string} [repositoryPath] - Path on the repository (null for default).
    * @param {callback} callback - Async callback.
@@ -117,7 +117,7 @@ class Wpkg {
   _lookForPackage(
     packageName,
     packageVersion,
-    archRoot,
+    arch,
     distribution,
     repositoryPath,
     callback
@@ -135,15 +135,16 @@ class Wpkg {
     }
     distribution = distribution.replace(/\/$/, '');
 
-    if (!archRoot) {
-      archRoot = getToolchainArch();
+    const archRoot = getToolchainArch();
+    if (!arch) {
+      arch = archRoot;
     }
 
     const filters = {
       distrib: new RegExp(`(${distribution.replace('+', '\\+')}|sources)`),
       name: packageName,
       version: packageVersion,
-      arch: new RegExp('(' + archRoot + '|all)'),
+      arch: new RegExp('(' + arch + '|all)'),
     };
 
     /* wpkg is able to install a package just by its name. But it's not possible
